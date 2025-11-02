@@ -1,38 +1,55 @@
-# Node modules
+# ====================================
+# Node & Dependency directories
+# ====================================
 node_modules/
 **/node_modules/
 
-# Environment files
+# ====================================
+# Environment & Config files
+# ====================================
 .env
 .env.*
 config/*.json
+*.local
 
+# ====================================
 # Build outputs
+# ====================================
+build/
+dist/
 android/app/build/
 ios/build/
 ios/Pods/
-build/
-dist/
 
-
+# ====================================
 # Logs
+# ====================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# Metro bundler cache
+# ====================================
+# Metro / Expo cache
+# ====================================
 .expo/
 .expo-shared/
 .expo-dev-client.json
 .expo-bundle
 .expo-source
 
+# ====================================
 # React Native specific
+# ====================================
 *.keystore
 *.gradle
 *.iml
+*.apk
+*.aab
 
-# Mac / Windows / IDE junk
+# ====================================
+# IDE / System files
+# ====================================
 .DS_Store
 Thumbs.db
 .idea/
@@ -40,11 +57,17 @@ Thumbs.db
 *.swp
 *.swo
 
+# ====================================
 # Coverage / Testing
+# ====================================
 coverage/
 jest-cache/
 jest-resolve-cache/
+.nyc_output/
 
+# ====================================
 # Temporary files
+# ====================================
 .tmp/
 temp/
+tmp/
