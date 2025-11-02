@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "aws-amplify": "^6.15.7"
+    "aws-amplify": "^6.15.7",
+    "aws-sdk": "^2.1692.0"
   }
 }
