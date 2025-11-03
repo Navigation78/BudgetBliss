@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: DynamoDB Table for Budget Bliss Transactions
+
+Resources:
+  BudgetBlissTransactions:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: BudgetBlissTransactionsV2
+      AttributeDefinitions:
+        - AttributeName: transactionId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+        - AttributeName: type
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: transactionId
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        # Query by User
+        - IndexName: UserIdIndex
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        
+        # Query by Transaction Type (INCOMING / OUTGOING)
+        - IndexName: TypeIndex
+          KeySchema:
+            - AttributeName: type
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+      BillingMode: PAY_PER_REQUEST
+      TableClass: STANDARD
+      Tags:
+        - Key: Project
+          Value: BudgetBliss
+        - Key: Environment
+          Value: Production
