@@ -1,0 +1,101 @@
+/* Auth.css */
+
+/* Background + centering */
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(160deg, #fbeaea, #f8f2f2);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Card container */
+.auth-container {
+  width: 100%;
+  max-width: 380px;
+  background: #fff;
+  padding: 2.5rem;
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+/* Title */
+.auth-container h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: #1b1b1b;
+}
+
+.auth-container p {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Inputs */
+.auth-container input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  margin: 0.6rem 0;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: #fdf4f4;
+  transition: all 0.3s ease;
+}
+
+.auth-container input:focus {
+  outline: none;
+  border-color: #ff7a00;
+  background: #fff;
+  box-shadow: 0 0 5px rgba(255, 122, 0, 0.3);
+}
+
+/* Buttons */
+.auth-container button {
+  width: 100%;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(90deg, #ff4b2b, #ff7a00);
+  cursor: pointer;
+  margin-top: 0.8rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-container button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 122, 0, 0.3);
+}
+
+/* Links */
+.auth-container a {
+  color: #ff4b2b;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.auth-container a:hover {
+  color: #ff7a00;
+}
+
+/* Helper texts */
+.auth-footer {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.forgot-password {
+  display: block;
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #ff4b2b;
+  cursor: pointer;
+}
