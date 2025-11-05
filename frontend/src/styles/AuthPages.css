@@ -39,18 +39,25 @@ body {
   width: 100%;
   padding: 0.9rem 1rem;
   margin: 0.6rem 0;
-  border: 1px solid #eee;
+  border: 1px solid #ccc; /* Slightly darker for contrast */
   border-radius: 12px;
   font-size: 1rem;
-  background: #fdf4f4;
+  background: #fff; /* White for clarity */
+  color: #000; /* ✅ Make input text black */
   transition: all 0.3s ease;
+}
+
+/* Placeholder color */
+.auth-container input::placeholder {
+  color: #666; /* Medium gray placeholder for visibility */
 }
 
 .auth-container input:focus {
   outline: none;
   border-color: #ff7a00;
   background: #fff;
-  box-shadow: 0 0 5px rgba(255, 122, 0, 0.3);
+  color: #000; /* Ensure focused text stays black */
+  box-shadow: 0 0 6px rgba(255, 122, 0, 0.3);
 }
 
 /* Buttons */
@@ -61,7 +68,7 @@ body {
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 500;
-  color: white;
+  color: #222;
   background: linear-gradient(90deg, #ff4b2b, #ff7a00);
   cursor: pointer;
   margin-top: 0.8rem;
