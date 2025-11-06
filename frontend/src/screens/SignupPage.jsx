@@ -1,76 +1,85 @@
 import React, { useState } from 'react';
-import { signUp, confirmSignUp } from 'aws-amplify/auth';
-import '../styles/AuthPages.css';
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import "../styles/AuthPages.css";
+
 
 function SignupPage() {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [code, setCode] = useState('');
-  const [stage, setStage] = useState('signup');
-  const [message, setMessage] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  async function handleSignup(e) {
+  const handleSignup = (e) => {
     e.preventDefault();
-    try {
-      await signUp({ username: email, password });
-      setStage('confirm');
-      setMessage('✅ Check your email for the confirmation code.');
-    } catch (error) {
-      setMessage('❌ Signup failed: ' + error.message);
-    }
-  }
-
-  async function handleConfirm(e) {
-    e.preventDefault();
-    try {
-      await confirmSignUp({ username: email, confirmationCode: code });
-      setMessage('🎉 Signup confirmed! You can now log in.');
-    } catch (error) {
-      setMessage('❌ Confirmation failed: ' + error.message);
-    }
-  }
+    alert('Signed up successfully! (Mocked)');
+  };
 
   return (
-    <div className="auth-container">
-      <h2>Sign Up</h2>
-      <p>Create your account</p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h2>Create Account</h2>
+        <p>Join Budget Bliss today</p>
 
-      {stage === 'signup' ? (
         <form onSubmit={handleSignup}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit">Sign Up</button>
-        </form>
-      ) : (
-        <form onSubmit={handleConfirm}>
-          <input
-            type="text"
-            placeholder="Confirmation Code"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-          />
-          <button type="submit">Confirm Signup</button>
-        </form>
-      )}
+          <div className="input-group">
+            <FaUser className="icon" />
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
 
-      <div className="auth-footer">
-        <p>
+          <div className="input-group">
+            <FaEnvelope className="icon" />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="input-group">
+            <FaLock className="icon" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <span className="toggle" onClick={() => setShowConfirm(!showConfirm)}>
+  {showConfirm ? <FaEye /> : <FaEyeSlash />}
+</span>
+
+          </div>
+
+          <div className="input-group">
+            <FaLock className="icon" />
+            <input
+              type={showConfirm ? 'text' : 'password'}
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+            <span className="toggle" onClick={() => setShowConfirm(!showConfirm)}>
+              {showConfirm ? <FaEyeSlash /> : <FaEye />}
+            </span>
+          </div>
+
+          <button type="submit" className="auth-btn">Sign Up</button>
+        </form>
+
+        <p className="auth-footer">
           Already have an account? <a href="/">Login</a>
         </p>
-        <p>{message}</p>
       </div>
     </div>
   );
