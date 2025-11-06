@@ -28,20 +28,20 @@ function App() {
           }
         />
         <Route
-          path="/analytics"
-          element={
-            <>
-              <Navbar />
-              <Analytics />
-            </>
-          }
-        />
-        <Route
           path="/create-budget"
           element={
             <>
               <Navbar />
               <CreateBudget />
+            </>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <>
+              <Navbar />
+              <Analytics />
             </>
           }
         />
