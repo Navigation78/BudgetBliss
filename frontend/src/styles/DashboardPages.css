@@ -1,94 +1,28 @@
-/* 🌿 General Page Layout */
-.page-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 100vh;
-  background-color: #f8fafc; /* soft off-white background */
-  color: #222; /* readable dark text */
+body {
+  margin: 0;
   font-family: "Poppins", sans-serif;
-  padding: 40px 20px;
+  background: linear-gradient(160deg, #90ce88, #03a678, #02675a);
+  color: #fff;
 }
 
-/* 🏷️ Headings */
-.page-container h1,
-.page-container h2 {
-  color: #2d3748; /* dark slate */
-  margin-bottom: 10px;
+.page-container {
   text-align: center;
-  letter-spacing: 0.5px;
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 4rem auto;
+  border-radius: 20px;
+  width: 80%;
+  max-width: 600px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.page-container h1 {
+  color: #ffe6b3;
+  margin-bottom: 1rem;
 }
 
 .page-container p {
-  color: #4a5568;
-  max-width: 600px;
-  text-align: center;
-  line-height: 1.6;
-}
-
-/* 📊 Card-like Section Blocks */
-.dashboard-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 25px;
-  width: 80%;
-  max-width: 700px;
-  margin-top: 30px;
-}
-
-.dashboard-card h3 {
-  color: #1a202c;
-  margin-bottom: 15px;
-}
-
-/* 📉 Buttons (For actions like Logout or View Tips) */
-button {
-  background-color: #f97316; /* orange accent */
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 24px;
+  color: #fdfdfd;
   font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  margin-top: 20px;
-}
-
-button:hover {
-  background-color: #ea580c;
-  transform: scale(1.03);
-}
-
-/* 🔗 Navigation Links */
-nav {
-  width: 100%;
-  background: #fff;
-  padding: 15px 0;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin-bottom: 30px;
-}
-
-nav a {
-  color: #f97316;
-  font-weight: 600;
-  text-decoration: none;
-  margin: 0 15px;
-}
-
-nav a:hover {
-  text-decoration: underline;
-}
-
-/*  Responsive Tweaks */
-@media (max-width: 600px) {
-  .dashboard-card {
-    width: 95%;
-  }
-
-  button {
-    width: 100%;
-  }
 }
