@@ -1,123 +1,252 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { Home, Utensils, Car, PiggyBank, Gamepad2, Shield, AlertCircle, CheckCircle, Save } from 'lucide-react';
 
-// Predefined categories
-const categories = [
-  { name: "Rent", color: "bg-blue-400" },
-  { name: "Food", color: "bg-blue-500" },
-  { name: "Transport", color: "bg-blue-600" },
-  { name: "Savings", color: "bg-green-500" },
-  { name: "Entertainment", color: "bg-blue-700" },
-  { name: "Insurance", color: "bg-blue-800" },
-];
+const CreateBudget = () => {
+  // Sample current balance - this will come from your backend
+  const currentBalance = 23000;
 
-const CreateBudget = ({ currentBalance = 15000 }) => {
-  // State for percentages
-  const [percentages, setPercentages] = useState(() => {
-    const initial = {};
-    categories.forEach((cat) => (initial[cat.name] = 0));
-    return initial;
+  // Predefined categories with icons and colors
+  const categoryConfig = {
+    rent: { name: 'Rent', icon: Home, color: 'bg-blue-100 text-blue-600' },
+    food: { name: 'Food', icon: Utensils, color: 'bg-green-100 text-green-600' },
+    transport: { name: 'Transport', icon: Car, color: 'bg-purple-100 text-purple-600' },
+    savings: { name: 'Savings', icon: PiggyBank, color: 'bg-yellow-100 text-yellow-600' },
+    entertainment: { name: 'Entertainment', icon: Gamepad2, color: 'bg-pink-100 text-pink-600' },
+    insurance: { name: 'Insurance', icon: Shield, color: 'bg-red-100 text-red-600' }
+  };
+
+  // Budget percentages state
+  const [budgetPercentages, setBudgetPercentages] = useState({
+    rent: 30,
+    food: 25,
+    transport: 15,
+    savings: 20,
+    entertainment: 5,
+    insurance: 5
   });
 
-  const [notification, setNotification] = useState("");
+  const [totalPercentage, setTotalPercentage] = useState(100);
+  const [isValid, setIsValid] = useState(true);
 
-  // Helper: calculate allocations
-  const allocations = categories.map((cat) => ({
-    name: cat.name,
-    percentage: percentages[cat.name],
-    amount: Math.round((percentages[cat.name] / 100) * currentBalance),
-    color: cat.color,
-  }));
+  // Calculate total percentage whenever budgetPercentages changes
+  useEffect(() => {
+    const total = Object.values(budgetPercentages).reduce((sum, val) => sum + val, 0);
+    setTotalPercentage(total);
+    setIsValid(total === 100);
+  }, [budgetPercentages]);
 
-  // Auto-normalize function: adjust largest category
-  const handlePercentageChange = (name, value) => {
-    value = Math.max(0, Math.min(100, Number(value))); // Clamp 0-100
+  // Handle slider/input change
+  const handlePercentageChange = (category, value) => {
+    const numValue = parseFloat(value) || 0;
+    const clampedValue = Math.min(Math.max(numValue, 0), 100);
+    
+    setBudgetPercentages(prev => ({
+      ...prev,
+      [category]: clampedValue
+    }));
+  };
 
-    let totalExcluding = Object.entries(percentages)
-      .filter(([key]) => key !== name)
-      .reduce((acc, [, val]) => acc + val, 0);
+  // Calculate amount for each category
+  const calculateAmount = (percentage) => {
+    return (currentBalance * percentage) / 100;
+  };
 
-    // New total with change
-    let newTotal = totalExcluding + value;
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      minimumFractionDigits: 0
+    }).format(amount);
+  };
 
-    let updated = { ...percentages, [name]: value };
-
-    if (newTotal > 100) {
-      // Need to reduce largest other category
-      let others = Object.entries(updated)
-        .filter(([key]) => key !== name)
-        .sort((a, b) => b[1] - a[1]); // Descending
-
-      if (others.length > 0) {
-        let [largestName, largestValue] = others[0];
-        let excess = newTotal - 100;
-        let newLargest = Math.max(0, largestValue - excess);
-        updated[largestName] = newLargest;
-        setNotification(
-          `Adjusted ${largestName} by -${excess}% to keep total at 100%`
-        );
-        setTimeout(() => setNotification(""), 3000);
-      }
+  // Handle save budget
+  const handleSaveBudget = () => {
+    if (isValid) {
+      // Here you'll send the budget to your backend
+      console.log('Saving budget:', budgetPercentages);
+      alert('Budget saved successfully!');
     }
-
-    setPercentages(updated);
   };
 
   return (
-    <div className="min-h-screen bg-softBlue p-6">
-      <h1 className="text-3xl font-bold text-royalBlue mb-6">Create Monthly Budget</h1>
-
-      {/* Notification */}
-      {notification && (
-        <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded">
-          {notification}
+    <div className="min-h-screen bg-white pt-20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[#04080F] mb-2">Create Your Budget</h1>
+          <p className="text-[#3E68A3]">Allocate your income across different categories</p>
         </div>
-      )}
 
-      {/* Sliders + Inputs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {categories.map((cat) => (
-          <div key={cat.name} className="bg-white p-4 rounded shadow-md">
-            <label className="block font-semibold text-gray-700 mb-2">{cat.name}</label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={percentages[cat.name]}
-              onChange={(e) => handlePercentageChange(cat.name, e.target.value)}
-              className={`w-full h-2 rounded ${cat.color}`}
-            />
-            <input
-              type="number"
-              min="0"
-              max="100"
-              value={percentages[cat.name]}
-              onChange={(e) => handlePercentageChange(cat.name, e.target.value)}
-              className="mt-2 w-20 p-1 border rounded"
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Preview Card */}
-      <div className="bg-white p-6 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold mb-4 text-royalBlue">Budget Preview</h2>
-        <div className="space-y-3">
-          {allocations.map((alloc) => (
-            <div key={alloc.name} className="flex justify-between items-center">
-              <span className="font-semibold">{alloc.name}</span>
-              <span className={`font-bold ${alloc.name === "Savings" ? "text-green-600" : "text-blue-600"}`}>
-                {alloc.percentage}% → KES {alloc.amount.toLocaleString()}
-              </span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Budget Categories Section */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Total Percentage Indicator */}
+            <div className={`${isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border-2 rounded-lg p-4`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {isValid ? (
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  ) : (
+                    <AlertCircle className="h-6 w-6 text-red-600" />
+                  )}
+                  <div>
+                    <p className={`font-semibold ${isValid ? 'text-green-700' : 'text-red-700'}`}>
+                      Total Allocation: {totalPercentage}%
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {isValid ? 'Perfect! Your budget is balanced.' : `You need to ${totalPercentage > 100 ? 'reduce' : 'add'} ${Math.abs(100 - totalPercentage)}% to reach 100%`}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-2xl font-bold">
+                  <span className={isValid ? 'text-green-600' : 'text-red-600'}>
+                    {totalPercentage}%
+                  </span>
+                  <span className="text-gray-400"> / 100%</span>
+                </div>
+              </div>
             </div>
-          ))}
+
+            {/* Category Sliders */}
+            {Object.entries(categoryConfig).map(([key, config]) => {
+              const Icon = config.icon;
+              const percentage = budgetPercentages[key];
+              
+              return (
+                <div key={key} className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`${config.color} p-3 rounded-full`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-[#04080F] text-lg">{config.name}</h3>
+                        <p className="text-sm text-gray-500">
+                          {formatCurrency(calculateAmount(percentage))}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Number Input */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={percentage}
+                        onChange={(e) => handlePercentageChange(key, e.target.value)}
+                        className="w-16 px-2 py-1 text-center border-2 border-[#A1C6EA] rounded-md font-semibold text-[#04080F] focus:outline-none focus:ring-2 focus:ring-[#3E68A3]"
+                      />
+                      <span className="text-[#3E68A3] font-semibold">%</span>
+                    </div>
+                  </div>
+                  
+                  {/* Slider */}
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={percentage}
+                    onChange={(e) => handlePercentageChange(key, e.target.value)}
+                    className="w-full h-2 bg-[#E0E9F6] rounded-lg appearance-none cursor-pointer slider"
+                    style={{
+                      background: `linear-gradient(to right, #3E68A3 0%, #3E68A3 ${percentage}%, #E0E9F6 ${percentage}%, #E0E9F6 100%)`
+                    }}
+                  />
+                </div>
+              );
+            })}
+
+            {/* Save Button */}
+            <button
+              onClick={handleSaveBudget}
+              disabled={!isValid}
+              className={`w-full py-4 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-colors ${
+                isValid
+                  ? 'bg-[#3E68A3] hover:bg-[#04080F] cursor-pointer'
+                  : 'bg-gray-300 cursor-not-allowed'
+              }`}
+            >
+              <Save className="h-5 w-5" />
+              {isValid ? 'Save Budget' : 'Balance Your Budget First'}
+            </button>
+          </div>
+
+          {/* Preview Card */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 bg-[#A1C6EA] rounded-lg p-6 shadow-lg">
+              <h2 className="text-xl font-bold text-[#04080F] mb-4">Budget Preview</h2>
+              
+              {/* Current Balance */}
+              <div className="bg-white rounded-lg p-4 mb-4">
+                <p className="text-sm text-gray-600 mb-1">Current Balance</p>
+                <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(currentBalance)}</p>
+              </div>
+
+              {/* Category Breakdown */}
+              <div className="space-y-3 mb-4">
+                {Object.entries(categoryConfig).map(([key, config]) => {
+                  const percentage = budgetPercentages[key];
+                  const amount = calculateAmount(percentage);
+                  
+                  return (
+                    <div key={key} className="bg-white bg-opacity-50 rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium text-[#04080F]">{config.name}</span>
+                        <span className="text-xs font-semibold text-[#3E68A3]">{percentage}%</span>
+                      </div>
+                      <p className="text-lg font-bold text-[#04080F]">{formatCurrency(amount)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Summary */}
+              <div className="bg-[#04080F] rounded-lg p-4 text-white">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm">Total Allocated</span>
+                  <span className="text-sm font-semibold">{totalPercentage}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Remaining</span>
+                  <span className={`text-lg font-bold ${isValid ? 'text-green-400' : 'text-red-400'}`}>
+                    {formatCurrency((currentBalance * (100 - totalPercentage)) / 100)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="mt-4 border-t pt-3 text-right font-semibold text-gray-700">
-          Total Allocated: KES {allocations.reduce((acc, a) => acc + a.amount, 0).toLocaleString()}
-        </div>
-        <div className="text-right text-gray-500">
-          Remaining Balance: KES {currentBalance - allocations.reduce((acc, a) => acc + a.amount, 0)}
-        </div>
-      </div>
+      </main>
+
+      <style jsx>{`
+        input[type='range']::-webkit-slider-thumb {
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #3E68A3;
+          cursor: pointer;
+          border: 3px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input[type='range']::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #3E68A3;
+          cursor: pointer;
+          border: 3px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input[type='number']::-webkit-inner-spin-button,
+        input[type='number']::-webkit-outer-spin-button {
+          opacity: 1;
+        }
+      `}</style>
     </div>
   );
 };

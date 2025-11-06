@@ -1,14 +1,13 @@
-// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        'soft-blue': '#E0E9F6',
-        'sky-blue': '#A1C6EA',
-        'royal-blue': '#3E68A3',
-        'midnight-blue': '#04080F',
+        'soft-blue': '#c4d5ecff',
+        'sky-blue': '#da91ddff',
+        'royal-blue': '#1d0f6aff',
+        'midnight-blue': '#8a7ee4ff',
       },
       fontFamily: {
         nunito: ["'Nunito Sans'", "sans-serif"],
