@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lambda function for processing M-PESA transactions and storing them in DynamoDB
+
+Resources:
+  BudgetBlissLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:GetItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  ProcessTransactionsLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ProcessBudgetBlissTransactions
+      Handler: processTransaction.lambda_handler
+      Role:
+        Fn::GetAtt:
+          - BudgetBlissLambdaRole
+          - Arn
+      Runtime: python3.9
+      Timeout: 10
+      MemorySize: 128
+      Code:
+        S3Bucket: budgetbliss-transactions-20251103155601
+        S3Key: lambda/processTransaction.zip
+      Environment:
+        Variables:
+          TABLE_NAME: BudgetBlissTransactionsV2
