@@ -1,71 +1,80 @@
-import React, { useState } from 'react';
-import { FaEye, FaEyeSlash, FaUser, FaLock } from 'react-icons/fa';
-import '../styles/AuthPages.css';
+import React, { useState } from "react";
+import { FaEye, FaEyeSlash, FaUser, FaLock } from "react-icons/fa";
 
-function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const LoginPage = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  // Mock authentication
-  const mockUser = {
-    email: email,
-    isLoggedIn: true,
+    const mockUser = {
+      email,
+      isLoggedIn: true,
+    };
+
+    localStorage.setItem("user", JSON.stringify(mockUser));
+    window.location.href = "/Home";
   };
 
-  // Save user session locally
-  localStorage.setItem('user', JSON.stringify(mockUser));
-
-  // Redirect to home
-  window.location.href = '/Home';
-};
-
-
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h2>Welcome Back</h2>
-        <p>Enter your credentials to log in</p>
+    <div className="min-h-screen flex items-center justify-center bg-softBlue px-4">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+        <h2 className="text-3xl font-bold text-royalBlue mb-2 text-center">Welcome Back</h2>
+        <p className="text-gray-600 text-center mb-6">Enter your credentials to log in</p>
 
-        <form onSubmit={handleLogin}>
-          <div className="input-group">
-            <FaUser className="icon" />
+        <form onSubmit={handleLogin} className="space-y-5">
+          {/* Email */}
+          <div className="flex items-center border rounded-md px-3 py-2">
+            <FaUser className="text-gray-400 mr-2" />
             <input
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="w-full outline-none text-gray-700 placeholder-gray-400"
             />
           </div>
 
-          <div className="input-group">
-            <FaLock className="icon" />
+          {/* Password */}
+          <div className="flex items-center border rounded-md px-3 py-2 relative">
+            <FaLock className="text-gray-400 mr-2" />
             <input
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="w-full outline-none text-gray-700 placeholder-gray-400"
             />
-            <span className="toggle" onClick={() => setShowPassword(!showPassword)}>
-  {showPassword ? <FaEye /> : <FaEyeSlash />}
-</span>
-
+            <span
+              className="absolute right-3 cursor-pointer text-gray-500"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FaEye /> : <FaEyeSlash />}
+            </span>
           </div>
 
-          <button type="submit" className="auth-btn">Login Now</button>
+          {/* Login Button */}
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white font-semibold py-2 rounded-md hover:bg-blue-700 transition"
+          >
+            Login Now
+          </button>
         </form>
 
-        <p className="auth-footer">
-          Don’t have an account? <a href="/signup">Sign Up</a>
+        <p className="text-center text-gray-500 mt-5">
+          Don’t have an account?{" "}
+          <a href="/signup" className="text-blue-600 font-medium hover:underline">
+            Sign Up
+          </a>
         </p>
       </div>
     </div>
   );
-}
+};
 
 export default LoginPage;
