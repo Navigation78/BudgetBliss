@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Home, Utensils, Car, PiggyBank, Gamepad2, Shield, AlertCircle, CheckCircle, Save } from 'lucide-react';
 
 const CreateBudget = () => {
-  // Sample current balance - this will come from your backend
-  const currentBalance = 23000;
+  // Placeholder before backend data comes in
+  const currentBalance = null; // replace with backend data later
 
   // Predefined categories with icons and colors
   const categoryConfig = {
@@ -15,18 +15,13 @@ const CreateBudget = () => {
     insurance: { name: 'Insurance', icon: Shield, color: 'bg-red-100 text-red-600' }
   };
 
-  // Budget percentages state
-  const [budgetPercentages, setBudgetPercentages] = useState({
-    rent: 30,
-    food: 25,
-    transport: 15,
-    savings: 20,
-    entertainment: 5,
-    insurance: 5
-  });
+  // Budget percentages state (empty initially)
+  const [budgetPercentages, setBudgetPercentages] = useState(
+    Object.keys(categoryConfig).reduce((acc, key) => ({ ...acc, [key]: 0 }), {})
+  );
 
-  const [totalPercentage, setTotalPercentage] = useState(100);
-  const [isValid, setIsValid] = useState(true);
+  const [totalPercentage, setTotalPercentage] = useState(0);
+  const [isValid, setIsValid] = useState(false);
 
   // Calculate total percentage whenever budgetPercentages changes
   useEffect(() => {
@@ -39,20 +34,16 @@ const CreateBudget = () => {
   const handlePercentageChange = (category, value) => {
     const numValue = parseFloat(value) || 0;
     const clampedValue = Math.min(Math.max(numValue, 0), 100);
-    
-    setBudgetPercentages(prev => ({
-      ...prev,
-      [category]: clampedValue
-    }));
+    setBudgetPercentages(prev => ({ ...prev, [category]: clampedValue }));
   };
 
-  // Calculate amount for each category
   const calculateAmount = (percentage) => {
+    if (!currentBalance) return 0; // placeholder if backend data missing
     return (currentBalance * percentage) / 100;
   };
 
-  // Format currency
   const formatCurrency = (amount) => {
+    if (amount === null || amount === 0) return '--'; // placeholder
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
       currency: 'KES',
@@ -60,12 +51,12 @@ const CreateBudget = () => {
     }).format(amount);
   };
 
-  // Handle save budget
   const handleSaveBudget = () => {
     if (isValid) {
-      // Here you'll send the budget to your backend
       console.log('Saving budget:', budgetPercentages);
       alert('Budget saved successfully!');
+    } else {
+      alert('Please balance your budget first');
     }
   };
 
@@ -79,7 +70,7 @@ const CreateBudget = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Budget Categories Section */}
+          {/* Budget Categories */}
           <div className="lg:col-span-2 space-y-6">
             {/* Total Percentage Indicator */}
             <div className={`${isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border-2 rounded-lg p-4`}>
@@ -95,7 +86,9 @@ const CreateBudget = () => {
                       Total Allocation: {totalPercentage}%
                     </p>
                     <p className="text-sm text-gray-600">
-                      {isValid ? 'Perfect! Your budget is balanced.' : `You need to ${totalPercentage > 100 ? 'reduce' : 'add'} ${Math.abs(100 - totalPercentage)}% to reach 100%`}
+                      {isValid
+                        ? 'Perfect! Your budget is balanced.'
+                        : `You need to ${totalPercentage > 100 ? 'reduce' : 'add'} ${Math.abs(100 - totalPercentage)}% to reach 100%`}
                     </p>
                   </div>
                 </div>
@@ -112,7 +105,6 @@ const CreateBudget = () => {
             {Object.entries(categoryConfig).map(([key, config]) => {
               const Icon = config.icon;
               const percentage = budgetPercentages[key];
-              
               return (
                 <div key={key} className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-4">
@@ -127,7 +119,7 @@ const CreateBudget = () => {
                         </p>
                       </div>
                     </div>
-                    
+
                     {/* Number Input */}
                     <div className="flex items-center gap-2">
                       <input
@@ -141,7 +133,7 @@ const CreateBudget = () => {
                       <span className="text-[#3E68A3] font-semibold">%</span>
                     </div>
                   </div>
-                  
+
                   {/* Slider */}
                   <input
                     type="range"
@@ -163,9 +155,7 @@ const CreateBudget = () => {
               onClick={handleSaveBudget}
               disabled={!isValid}
               className={`w-full py-4 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-colors ${
-                isValid
-                  ? 'bg-[#3E68A3] hover:bg-[#04080F] cursor-pointer'
-                  : 'bg-gray-300 cursor-not-allowed'
+                isValid ? 'bg-[#3E68A3] hover:bg-[#04080F] cursor-pointer' : 'bg-gray-300 cursor-not-allowed'
               }`}
             >
               <Save className="h-5 w-5" />
@@ -177,7 +167,7 @@ const CreateBudget = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-24 bg-[#A1C6EA] rounded-lg p-6 shadow-lg">
               <h2 className="text-xl font-bold text-[#04080F] mb-4">Budget Preview</h2>
-              
+
               {/* Current Balance */}
               <div className="bg-white rounded-lg p-4 mb-4">
                 <p className="text-sm text-gray-600 mb-1">Current Balance</p>
@@ -189,7 +179,6 @@ const CreateBudget = () => {
                 {Object.entries(categoryConfig).map(([key, config]) => {
                   const percentage = budgetPercentages[key];
                   const amount = calculateAmount(percentage);
-                  
                   return (
                     <div key={key} className="bg-white bg-opacity-50 rounded-lg p-3">
                       <div className="flex justify-between items-center mb-1">
@@ -211,7 +200,7 @@ const CreateBudget = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Remaining</span>
                   <span className={`text-lg font-bold ${isValid ? 'text-green-400' : 'text-red-400'}`}>
-                    {formatCurrency((currentBalance * (100 - totalPercentage)) / 100)}
+                    {formatCurrency(currentBalance ? (currentBalance * (100 - totalPercentage)) / 100 : 0)}
                   </span>
                 </div>
               </div>
@@ -219,34 +208,6 @@ const CreateBudget = () => {
           </div>
         </div>
       </main>
-
-      <style jsx>{`
-        input[type='range']::-webkit-slider-thumb {
-          appearance: none;
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: #3E68A3;
-          cursor: pointer;
-          border: 3px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        input[type='range']::-moz-range-thumb {
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background: #3E68A3;
-          cursor: pointer;
-          border: 3px solid white;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        input[type='number']::-webkit-inner-spin-button,
-        input[type='number']::-webkit-outer-spin-button {
-          opacity: 1;
-        }
-      `}</style>
     </div>
   );
 };
