@@ -1,41 +1,23 @@
-import React, { useState } from 'react';
-import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import React, { useState, useEffect } from 'react';
+import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, Target, Award, Calendar } from 'lucide-react';
 
 const Analytics = () => {
-  // Sample data - this will come from your AWS SageMaker model
   const [timeRange, setTimeRange] = useState('7days'); // 7days or 30days
 
-  // Spending by category (for pie chart)
-  const categoryData = [
-    { name: 'Food', value: 15000, color: '#10B981' },
-    { name: 'Transport', value: 8000, color: '#8B5CF6' },
-    { name: 'Entertainment', value: 3500, color: '#EC4899' },
-    { name: 'Utilities', value: 5000, color: '#F59E0B' },
-    { name: 'Shopping', value: 6500, color: '#3B82F6' },
-    { name: 'Other', value: 2000, color: '#6B7280' }
-  ];
+  // Placeholder state for backend data
+  const [categoryData, setCategoryData] = useState([]);
+  const [trendData, setTrendData] = useState([]);
+  const [insights, setInsights] = useState({
+    biggestCategory: { name: '--', amount: 0, percentage: 0 },
+    largestTransaction: { description: '--', amount: 0, date: '--', category: '--' },
+    totalSpending: 0,
+    savingsGoal: { target: 0, current: 0, percentage: 0 }
+  });
 
-  // Daily spending trend (last 7 days)
-  const trendData = [
-    { day: 'Mon', amount: 2500 },
-    { day: 'Tue', amount: 3200 },
-    { day: 'Wed', amount: 1800 },
-    { day: 'Thu', amount: 4100 },
-    { day: 'Fri', amount: 5500 },
-    { day: 'Sat', amount: 7200 },
-    { day: 'Sun', amount: 3800 }
-  ];
-
-  // Analytics insights
-  const insights = {
-    biggestCategory: { name: 'Food', amount: 15000, percentage: 37.5 },
-    largestTransaction: { description: 'Weekend Shopping', amount: 7200, date: '2025-11-06', category: 'Shopping' },
-    totalSpending: 40000,
-    savingsGoal: { target: 20000, current: 14500, percentage: 72.5 }
-  };
-
+  // Currency formatter
   const formatCurrency = (amount) => {
+    if (!amount) return '--';
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
       currency: 'KES',
@@ -43,7 +25,7 @@ const Analytics = () => {
     }).format(amount);
   };
 
-  // Custom label for pie chart
+  // Custom Pie Chart Label
   const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
@@ -63,6 +45,15 @@ const Analytics = () => {
     );
   };
 
+  // TODO: Add useEffect to fetch analytics from backend
+  // useEffect(() => {
+  //   fetchAnalytics(timeRange).then(data => {
+  //     setCategoryData(data.categoryData);
+  //     setTrendData(data.trendData);
+  //     setInsights(data.insights);
+  //   });
+  // }, [timeRange]);
+
   return (
     <div className="min-h-screen bg-white pt-20">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -79,9 +70,7 @@ const Analytics = () => {
             <button
               onClick={() => setTimeRange('7days')}
               className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                timeRange === '7days'
-                  ? 'bg-[#3E68A3] text-white'
-                  : 'bg-[#E0E9F6] text-[#3E68A3] hover:bg-[#A1C6EA]'
+                timeRange === '7days' ? 'bg-[#3E68A3] text-white' : 'bg-[#E0E9F6] text-[#3E68A3] hover:bg-[#A1C6EA]'
               }`}
             >
               Last 7 Days
@@ -89,9 +78,7 @@ const Analytics = () => {
             <button
               onClick={() => setTimeRange('30days')}
               className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                timeRange === '30days'
-                  ? 'bg-[#3E68A3] text-white'
-                  : 'bg-[#E0E9F6] text-[#3E68A3] hover:bg-[#A1C6EA]'
+                timeRange === '30days' ? 'bg-[#3E68A3] text-white' : 'bg-[#E0E9F6] text-[#3E68A3] hover:bg-[#A1C6EA]'
               }`}
             >
               Last 30 Days
@@ -110,7 +97,7 @@ const Analytics = () => {
             </div>
             <h3 className="text-gray-600 text-sm mb-1">Total Spending</h3>
             <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(insights.totalSpending)}</p>
-            <p className="text-xs text-gray-500 mt-1">Last 7 days</p>
+            <p className="text-xs text-gray-500 mt-1">Last {timeRange === '7days' ? '7 days' : '30 days'}</p>
           </div>
 
           {/* Biggest Category */}
@@ -155,21 +142,15 @@ const Analytics = () => {
                     labelLine={false}
                     label={renderCustomLabel}
                     outerRadius={100}
-                    fill="#8884d8"
                     dataKey="value"
                   >
                     {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={entry.color || '#8884d8'} />
                     ))}
                   </Pie>
                   <Tooltip 
                     formatter={(value) => formatCurrency(value)}
-                    contentStyle={{ 
-                      backgroundColor: '#04080F', 
-                      border: 'none', 
-                      borderRadius: '8px',
-                      color: 'white'
-                    }}
+                    contentStyle={{ backgroundColor: '#04080F', border: 'none', borderRadius: '8px', color: 'white' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -193,38 +174,18 @@ const Analytics = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E0E9F6" />
-                  <XAxis 
-                    dataKey="day" 
-                    stroke="#3E68A3"
-                    style={{ fontSize: '12px' }}
-                  />
-                  <YAxis 
-                    stroke="#3E68A3"
-                    style={{ fontSize: '12px' }}
-                    tickFormatter={(value) => `${value / 1000}K`}
-                  />
+                  <XAxis dataKey="day" stroke="#3E68A3" style={{ fontSize: '12px' }} />
+                  <YAxis stroke="#3E68A3" style={{ fontSize: '12px' }} tickFormatter={(value) => `${value / 1000}K`} />
                   <Tooltip 
                     formatter={(value) => formatCurrency(value)}
-                    contentStyle={{ 
-                      backgroundColor: '#04080F', 
-                      border: 'none', 
-                      borderRadius: '8px',
-                      color: 'white'
-                    }}
+                    contentStyle={{ backgroundColor: '#04080F', border: 'none', borderRadius: '8px', color: 'white' }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="amount" 
-                    stroke="#3E68A3" 
-                    strokeWidth={3}
-                    dot={{ fill: '#3E68A3', r: 5 }}
-                    activeDot={{ r: 7 }}
-                  />
+                  <Line type="monotone" dataKey="amount" stroke="#3E68A3" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
             <p className="text-sm text-gray-500 mt-2 text-center">
-              Average daily spending: {formatCurrency(insights.totalSpending / 7)}
+              Average daily spending: {trendData.length ? formatCurrency(trendData.reduce((sum, t) => sum + t.amount, 0) / trendData.length) : '--'}
             </p>
           </div>
         </div>
@@ -238,15 +199,11 @@ const Analytics = () => {
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-red-700 mb-2">Largest Transaction This Week</h3>
+                <h3 className="text-lg font-bold text-red-700 mb-2">Largest Transaction</h3>
                 <div className="bg-white rounded-lg p-4">
                   <p className="font-semibold text-[#04080F] mb-1">{insights.largestTransaction.description}</p>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {insights.largestTransaction.category} • {insights.largestTransaction.date}
-                  </p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {formatCurrency(insights.largestTransaction.amount)}
-                  </p>
+                  <p className="text-sm text-gray-600 mb-2">{insights.largestTransaction.category} • {insights.largestTransaction.date}</p>
+                  <p className="text-2xl font-bold text-red-600">{formatCurrency(insights.largestTransaction.amount)}</p>
                 </div>
               </div>
             </div>
@@ -263,16 +220,10 @@ const Analytics = () => {
                 <div className="bg-white rounded-lg p-4">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-sm text-gray-600">Current Progress</span>
-                    <span className="text-lg font-bold text-green-600">
-                      {insights.savingsGoal.percentage}%
-                    </span>
+                    <span className="text-lg font-bold text-green-600">{insights.savingsGoal.percentage}%</span>
                   </div>
-                  {/* Progress Bar */}
                   <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
-                    <div 
-                      className="bg-green-500 h-3 rounded-full transition-all duration-500"
-                      style={{ width: `${insights.savingsGoal.percentage}%` }}
-                    ></div>
+                    <div className="bg-green-500 h-3 rounded-full transition-all duration-500" style={{ width: `${insights.savingsGoal.percentage}%` }}></div>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">
@@ -283,9 +234,7 @@ const Analytics = () => {
                     </span>
                   </div>
                   <p className="text-xs text-green-700 mt-3 font-medium">
-                    {insights.savingsGoal.percentage >= 75 
-                      ? '🎉 Great progress! You\'re almost there!' 
-                      : '💪 Keep going! You\'re on the right track!'}
+                    {insights.savingsGoal.percentage >= 75 ? '🎉 Great progress!' : '💪 Keep going!'}
                   </p>
                 </div>
               </div>
@@ -296,8 +245,7 @@ const Analytics = () => {
         {/* AI Insight Badge */}
         <div className="mt-8 bg-[#E0E9F6] border-2 border-[#A1C6EA] rounded-lg p-4 text-center">
           <p className="text-sm text-[#3E68A3]">
-            <span className="font-semibold">🤖 AI Insight:</span> Based on your spending patterns, 
-            you could save an additional {formatCurrency(2500)} this month by reducing {insights.biggestCategory.name} expenses by 15%.
+            <span className="font-semibold">🤖 AI Insight:</span> Based on your spending patterns, you could save an additional <span>{formatCurrency(0)}</span> this month by reducing <span>{insights.biggestCategory.name}</span> expenses.
           </p>
         </div>
       </main>

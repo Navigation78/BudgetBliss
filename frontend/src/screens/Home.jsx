@@ -1,54 +1,26 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Wallet, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, CheckCircle } from 'lucide-react';
 
 const Home = () => {
-  // Sample data - this will come from your backend
+  // Placeholder before backend data comes in
   const dashboardData = {
-    moneyIn: 85000,
-    moneyOut: 62000,
-    currentBalance: 23000,
-    financialStatus: 'good', // 'good', 'warning', 'alert'
-    recentTransactions: [
-      { id: 1, description: 'Grocery Shopping', amount: -3500, date: '2025-11-05', category: 'Food' },
-      { id: 2, description: 'Salary Deposit', amount: 85000, date: '2025-11-04', category: 'Income' },
-      { id: 3, description: 'Electricity Bill', amount: -2800, date: '2025-11-03', category: 'Utilities' }
-    ]
+    moneyIn: null,
+    moneyOut: null,
+    currentBalance: null,
+    financialStatus: null,
+    recentTransactions: []
   };
 
   const getStatusConfig = (status) => {
     switch(status) {
       case 'good':
-        return {
-          icon: CheckCircle,
-          text: 'Great! You\'re within budget',
-          color: 'text-green-600',
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200'
-        };
+        return { icon: CheckCircle, text: "You're within budget", color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' };
       case 'warning':
-        return {
-          icon: AlertTriangle,
-          text: 'Careful! You\'re approaching your limit',
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-50',
-          borderColor: 'border-yellow-200'
-        };
+        return { icon: CheckCircle, text: "Approaching your limit", color: 'text-yellow-600', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' };
       case 'alert':
-        return {
-          icon: AlertCircle,
-          text: 'Alert! You\'ve exceeded your budget',
-          color: 'text-red-600',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200'
-        };
+        return { icon: CheckCircle, text: "Exceeded your budget", color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' };
       default:
-        return {
-          icon: CheckCircle,
-          text: 'Financial status unknown',
-          color: 'text-gray-600',
-          bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200'
-        };
+        return { icon: CheckCircle, text: "Financial status unavailable", color: 'text-gray-600', bgColor: 'bg-gray-50', borderColor: 'border-gray-200' };
     }
   };
 
@@ -56,6 +28,7 @@ const Home = () => {
   const StatusIcon = statusConfig.icon;
 
   const formatCurrency = (amount) => {
+    if (amount === null) return '--'; // placeholder for missing data
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
       currency: 'KES',
@@ -64,18 +37,16 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-20"> {/* Added pt-20 for navbar spacing */}
-      {/* Main Content */}
+    <div className="min-h-screen bg-white pt-20">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#04080F] mb-2">Welcome back, User!</h1>
-          <p className="text-[#3E68A3]">Here's your financial overview for November 2025</p>
+          <h1 className="text-3xl font-bold text-[#04080F] mb-2">Welcome back!</h1>
+          <p className="text-[#3E68A3]">Here's your financial overview</p>
         </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Money In Card */}
           <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-green-100 p-3 rounded-full">
@@ -87,7 +58,6 @@ const Home = () => {
             <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(dashboardData.moneyIn)}</p>
           </div>
 
-          {/* Money Out Card */}
           <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-red-100 p-3 rounded-full">
@@ -99,7 +69,6 @@ const Home = () => {
             <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(dashboardData.moneyOut)}</p>
           </div>
 
-          {/* Current Balance Card */}
           <div className="bg-[#A1C6EA] rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-white p-3 rounded-full">
@@ -112,7 +81,7 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Financial Status Indicator */}
+        {/* Financial Status */}
         <div className={`${statusConfig.bgColor} border-2 ${statusConfig.borderColor} rounded-lg p-6 mb-8`}>
           <div className="flex items-center">
             <StatusIcon className={`h-8 w-8 ${statusConfig.color} mr-4`} />
@@ -127,27 +96,29 @@ const Home = () => {
         <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-[#04080F]">Recent Transactions</h2>
-            <button className="text-[#3E68A3] hover:text-[#A1C6EA] font-semibold text-sm transition">
-              View All
-            </button>
+            <button className="text-[#3E68A3] hover:text-[#A1C6EA] font-semibold text-sm transition">View All</button>
           </div>
           
-          <div className="space-y-4">
-            {dashboardData.recentTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between p-4 bg-[#E0E9F6] rounded-lg hover:bg-[#A1C6EA] transition-colors">
-                <div className="flex-1">
-                  <p className="font-semibold text-[#04080F]">{transaction.description}</p>
-                  <p className="text-sm text-[#3E68A3]">{transaction.category} • {transaction.date}</p>
+          {dashboardData.recentTransactions.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">No transactions yet</p>
+          ) : (
+            <div className="space-y-4">
+              {dashboardData.recentTransactions.map(tx => (
+                <div key={tx.id} className="flex items-center justify-between p-4 bg-[#E0E9F6] rounded-lg hover:bg-[#A1C6EA] transition-colors">
+                  <div className="flex-1">
+                    <p className="font-semibold text-[#04080F]">{tx.description}</p>
+                    <p className="text-sm text-[#3E68A3]">{tx.category} • {tx.date}</p>
+                  </div>
+                  <div className={`font-bold text-lg ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {tx.amount > 0 ? '+' : ''}{formatCurrency(tx.amount)}
+                  </div>
                 </div>
-                <div className={`font-bold text-lg ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {transaction.amount > 0 ? '+' : ''}{formatCurrency(transaction.amount)}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Quick Action Button */}
+        {/* Quick Action */}
         <div className="mt-8 text-center">
           <button className="bg-[#3E68A3] hover:bg-[#04080F] text-white font-semibold px-8 py-3 rounded-lg transition-colors shadow-lg">
             Create New Budget
