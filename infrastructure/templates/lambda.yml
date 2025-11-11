@@ -1,52 +1,48 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Lambda function for processing M-PESA transactions and storing them in DynamoDB
+Description: "Lambda functions for Budget Bliss backend"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
 
 Resources:
-  BudgetBlissLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: DynamoDBAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dynamodb:PutItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:GetItem
-                  - dynamodb:Query
-                  - dynamodb:Scan
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: "*"
-
-  ProcessTransactionsLambda:
+  CategorizeTransactionsFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: ProcessBudgetBlissTransactions
-      Handler: processTransaction.lambda_handler
-      Role:
-        Fn::GetAtt:
-          - BudgetBlissLambdaRole
-          - Arn
-      Runtime: python3.9
-      Timeout: 10
-      MemorySize: 128
+      FunctionName: !Sub "BudgetBliss-CategorizeTransactions-${Environment}"
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Timeout: 15
+      MemorySize: 256
+      Role: arn:aws:iam::923102105976:role/BudgetBlissLambdaRole
       Code:
-        S3Bucket: budgetbliss-transactions-20251103155601
-        S3Key: lambda/processTransaction.zip
+        S3Bucket: budgetbliss-lambda-code
+        S3Key: categorize-transactions.zip
       Environment:
         Variables:
-          TABLE_NAME: BudgetBlissTransactionsV2
+          TRANSACTIONS_TABLE: !Sub "BudgetBliss-Transactions-${Environment}"
+          BUDGETS_TABLE: !Sub "BudgetBliss-Budgets-${Environment}"
+
+  GenerateTipsFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "BudgetBliss-GenerateTips-${Environment}"
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Timeout: 30
+      MemorySize: 256
+      Role: arn:aws:iam::923102105976:role/BudgetBlissLambdaRole
+      Code:
+        S3Bucket: budgetbliss-lambda-code
+        S3Key: generate-tips.zip
+      Environment:
+        Variables:
+          OPENAI_API_KEY: "<YOUR_OPENAI_API_KEY>"
+          TIPS_TABLE: !Sub "BudgetBliss-Tips-${Environment}"
+
+Outputs:
+  CategorizeTransactionsFunctionArn:
+    Value: !GetAtt CategorizeTransactionsFunction.Arn
+  GenerateTipsFunctionArn:
+    Value: !GetAtt GenerateTipsFunction.Arn

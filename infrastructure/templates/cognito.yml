@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Cognito user authentication setup for Budget Bliss"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+
+Resources:
+  BudgetBlissUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "BudgetBlissUserPool-${Environment}"
+      AutoVerifiedAttributes: [email, phone_number]
+      UsernameAttributes: [email]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: true
+        - Name: phone_number
+          Required: true
+          Mutable: true
+        - Name: preferred_username
+          Mutable: true
+
+  BudgetBlissUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "BudgetBlissAppClient-${Environment}"
+      GenerateSecret: false
+      UserPoolId: !Ref BudgetBlissUserPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  BudgetBlissIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: !Sub "BudgetBlissIdentityPool-${Environment}"
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+        - ClientId: !Ref BudgetBlissUserPoolClient
+          ProviderName: !GetAtt BudgetBlissUserPool.ProviderName
+
+Outputs:
+  UserPoolId:
+    Value: !Ref BudgetBlissUserPool
+  UserPoolClientId:
+    Value: !Ref BudgetBlissUserPoolClient
+  IdentityPoolId:
+    Value: !Ref BudgetBlissIdentityPool
