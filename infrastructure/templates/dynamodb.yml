@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  BudgetBliss DynamoDB Tables Stack
+  Creates Users, Transactions, Categories, and Budgets tables
+  for the Budget Bliss project. Includes GSI for user-based queries.
+
+Resources:
+
+  #########################
+  # Users Table
+  #########################
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Users
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: BudgetBliss
+
+  #########################
+  # Categories Table
+  #########################
+  CategoriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Categories
+      AttributeDefinitions:
+        - AttributeName: categoryId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: categoryId
+          KeyType: HASH
+      # GSI to query categories by user
+      GlobalSecondaryIndexes:
+        - IndexName: userId-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: BudgetBliss
+
+  #########################
+  # Transactions Table
+  #########################
+  TransactionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Transactions
+      AttributeDefinitions:
+        - AttributeName: transactionId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: transactionId
+          KeyType: HASH
+      # GSI to query transactions by user
+      GlobalSecondaryIndexes:
+        - IndexName: userId-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: BudgetBliss
+
+  #########################
+  # Budgets Table
+  #########################
+  BudgetsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Budgets
+      AttributeDefinitions:
+        - AttributeName: budgetId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: budgetId
+          KeyType: HASH
+      # GSI to query budgets by user
+      GlobalSecondaryIndexes:
+        - IndexName: userId-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: Project
+          Value: BudgetBliss
+
+  #########################
+  # Lambda Trigger for Default Category
+  #########################
+  CreateDefaultCategoryLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: CreateDefaultCategory
+      Handler: index.handler
+      Runtime: nodejs18.x
+      Role: arn:aws:iam::923102105976:role/<YOUR_LAMBDA_EXEC_ROLE>
+      Code:
+        S3Bucket: budgetbliss-lambda-code
+        S3Key: createDefaultCategory.zip
+      Description: >
+        Lambda triggered when a new user is created.
+        Automatically inserts "Uncategorized" category into Categories table.
+
+  # You can optionally attach a trigger via DynamoDB Streams or
+  # call this Lambda from your user creation API.
