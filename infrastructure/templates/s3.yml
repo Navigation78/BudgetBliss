@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "S3 buckets for BudgetBliss (Lambda code, frontend assets, logs)"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+Resources:
+  # S3 bucket for Lambda code deployment
+  LambdaCodeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "budgetbliss-lambda-code-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: LambdaCode
+
+  # S3 bucket for frontend assets (static hosting)
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "budgetbliss-frontend-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html  # SPA fallback
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: Frontend
+
+  # Bucket policy for frontend to allow public read
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublicRead
+            Effect: Allow
+            Principal: "*"
+            Action:
+              - s3:GetObject
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+
+  # S3 bucket for CloudTrail logs and app logs
+  LogsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "budgetbliss-logs-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldLogs
+            Status: Enabled
+            ExpirationInDays: 90  # Retain logs for 90 days
+            NoncurrentVersionExpirationInDays: 30
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Purpose
+          Value: Logs
+
+  # Bucket policy for CloudTrail to write logs
+  LogsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LogsBucket
+      PolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub "${LogsBucket.Arn}/*"
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+
+Outputs:
+  LambdaCodeBucketName:
+    Value: !Ref LambdaCodeBucket
+    Description: S3 bucket for Lambda code deployment
+
+  LambdaCodeBucketArn:
+    Value: !GetAtt LambdaCodeBucket.Arn
+
+  FrontendBucketName:
+    Value: !Ref FrontendBucket
+    Description: S3 bucket for frontend static hosting
+
+  FrontendWebsiteUrl:
+    Value: !GetAtt FrontendBucket.WebsiteURL
+    Description: Frontend website URL
+
+  LogsBucketName:
+    Value: !Ref LogsBucket
+    Description: S3 bucket for application and audit logs
+
+  LogsBucketArn:
+    Value: !GetAtt LogsBucket.Arn

@@ -7,6 +7,7 @@
 const transactionService = require('../../services/transactionService');
 const categoryService = require('../../services/categoryService');
 const db = require('../../services/dynamodbService');
+const { publishTransactionError } = require('../../services/notificationService');
 
 // Mock categorization logic - replace with actual AI/ML implementation
 const categorizationRules = {
@@ -113,6 +114,19 @@ const handler = async (event) => {
         record,
         error: error.message,
       });
+      
+      // Publish error notification
+      try {
+        const message = JSON.parse(record.body);
+        const { transactionId, userId } = message;
+        await publishTransactionError({
+          transactionId,
+          userId,
+          errorMessage: error.message
+        });
+      } catch (notificationError) {
+        console.error('Failed to publish error notification:', notificationError);
+      }
     }
   }
 
