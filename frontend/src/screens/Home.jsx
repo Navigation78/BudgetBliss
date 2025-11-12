@@ -1,9 +1,14 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, Wallet, CheckCircle } from 'lucide-react';
+import useFetch from '../hooks/useFetch';
+import LoadingSkeleton from '../components/LoadingSkeleton';
+import formatCurrency from '../utils/formatCurrency';
 
 const Home = () => {
-  // Placeholder before backend data comes in
-  const dashboardData = {
+  // Fetch dashboard data from backend
+  const { data: dashboardData, loading: dashboardLoading, error: dashboardError, refetch } = useFetch('/api/dashboard');
+
+  const safeData = dashboardData || {
     moneyIn: null,
     moneyOut: null,
     currentBalance: null,
@@ -24,17 +29,10 @@ const Home = () => {
     }
   };
 
-  const statusConfig = getStatusConfig(dashboardData.financialStatus);
+  const statusConfig = getStatusConfig(safeData.financialStatus);
   const StatusIcon = statusConfig.icon;
 
-  const formatCurrency = (amount) => {
-    if (amount === null) return '--'; // placeholder for missing data
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
+  // use imported formatCurrency util which handles nulls
 
   return (
     <div className="min-h-screen bg-white pt-20">
@@ -47,6 +45,20 @@ const Home = () => {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {dashboardLoading && (
+            <div className="md:col-span-3">
+              <LoadingSkeleton text="Loading dashboard..." />
+            </div>
+          )}
+          {dashboardError && (
+            <div className="md:col-span-3 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
+              <p className="text-red-600 font-semibold">Unable to load dashboard</p>
+              <p className="text-sm text-gray-700">{dashboardError.message}</p>
+              <div className="mt-3">
+                <button onClick={() => refetch()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+              </div>
+            </div>
+          )}
           <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-green-100 p-3 rounded-full">
@@ -55,7 +67,7 @@ const Home = () => {
               <span className="text-sm text-[#3E68A3] font-semibold">This Month</span>
             </div>
             <h3 className="text-gray-600 text-sm mb-1">Money In</h3>
-            <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(dashboardData.moneyIn)}</p>
+            <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(safeData.moneyIn)}</p>
           </div>
 
           <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-lg transition-shadow">
@@ -66,7 +78,7 @@ const Home = () => {
               <span className="text-sm text-[#3E68A3] font-semibold">This Month</span>
             </div>
             <h3 className="text-gray-600 text-sm mb-1">Money Out</h3>
-            <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(dashboardData.moneyOut)}</p>
+            <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(safeData.moneyOut)}</p>
           </div>
 
           <div className="bg-[#A1C6EA] rounded-lg p-6 hover:shadow-lg transition-shadow">
@@ -77,7 +89,7 @@ const Home = () => {
               <span className="text-sm text-[#04080F] font-semibold">Available</span>
             </div>
             <h3 className="text-[#04080F] text-sm mb-1">Current Balance</h3>
-            <p className="text-2xl font-bold text-white">{formatCurrency(dashboardData.currentBalance)}</p>
+            <p className="text-2xl font-bold text-white">{formatCurrency(safeData.currentBalance)}</p>
           </div>
         </div>
 
@@ -99,11 +111,11 @@ const Home = () => {
             <button className="text-[#3E68A3] hover:text-[#A1C6EA] font-semibold text-sm transition">View All</button>
           </div>
           
-          {dashboardData.recentTransactions.length === 0 ? (
+          {safeData.recentTransactions.length === 0 ? (
             <p className="text-gray-500 text-center py-4">No transactions yet</p>
           ) : (
             <div className="space-y-4">
-              {dashboardData.recentTransactions.map(tx => (
+              {safeData.recentTransactions.map(tx => (
                 <div key={tx.id} className="flex items-center justify-between p-4 bg-[#E0E9F6] rounded-lg hover:bg-[#A1C6EA] transition-colors">
                   <div className="flex-1">
                     <p className="font-semibold text-[#04080F]">{tx.description}</p>
