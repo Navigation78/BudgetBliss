@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "CloudWatch monitoring, alarms, and logging for BudgetBliss"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+  
+  AlertEmail:
+    Type: String
+    Description: "Email for alarm notifications (required for prod, optional for dev)"
+    Default: ""
+
+Resources:
+  # SNS Topic for alarm notifications
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "BudgetBlissAlarms-${Environment}"
+      DisplayName: "Budget Bliss CloudWatch Alarms"
+
+  # Email subscription for alarms (optional)
+  AlarmEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlertEmail
+    Properties:
+      TopicArn: !Ref AlarmTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  # Log Group for Lambda functions
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/budgetbliss-${Environment}"
+      RetentionInDays: 30
+
+  # Log Group for API Gateway
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/apigateway/budgetbliss-${Environment}"
+      RetentionInDays: 14
+
+  # Log Group for DynamoDB (if enable streams logging)
+  DynamoDBLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/dynamodb/budgetbliss-${Environment}"
+      RetentionInDays: 14
+
+  # Alarm: Lambda function errors
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "BudgetBliss-LambdaErrors-${Environment}"
+      AlarmDescription: "Alert when Lambda functions encounter errors"
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Sub "BudgetBliss-*-${Environment}"
+      AlarmActions:
+        - !Ref AlarmTopic
+      TreatMissingData: notBreaching
+
+  # Alarm: DynamoDB throttling
+  DynamoDBThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "BudgetBliss-DynamoDBThrottle-${Environment}"
+      AlarmDescription: "Alert when DynamoDB requests are throttled"
+      MetricName: UserErrors
+      Namespace: AWS/DynamoDB
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref AlarmTopic
+      TreatMissingData: notBreaching
+
+  # Alarm: API Gateway 5XX errors
+  ApiGateway5XXAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "BudgetBliss-APIGateway5XX-${Environment}"
+      AlarmDescription: "Alert on API Gateway 5XX errors"
+      MetricName: 5XXError
+      Namespace: AWS/ApiGateway
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 10
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref AlarmTopic
+      TreatMissingData: notBreaching
+
+  # Metric Filter: Log errors in Lambda logs
+  LambdaErrorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref LambdaLogGroup
+      FilterPattern: "[ERROR]"
+      MetricTransformations:
+        - MetricName: LambdaErrorCount
+          MetricNamespace: BudgetBliss/Lambda
+          MetricValue: "1"
+
+  # Dashboard for monitoring
+  MonitoringDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub "BudgetBliss-${Environment}"
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  ["AWS/Lambda", "Invocations", {"stat": "Sum"}],
+                  [".", "Errors", {"stat": "Sum"}],
+                  [".", "Duration", {"stat": "Average"}]
+                ],
+                "period": 300,
+                "stat": "Average",
+                "region": "${AWS::Region}",
+                "title": "Lambda Performance"
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  ["AWS/DynamoDB", "ConsumedReadCapacityUnits"],
+                  [".", "ConsumedWriteCapacityUnits"]
+                ],
+                "period": 60,
+                "stat": "Sum",
+                "region": "${AWS::Region}",
+                "title": "DynamoDB Capacity"
+              }
+            },
+            {
+              "type": "metric",
+              "properties": {
+                "metrics": [
+                  ["AWS/ApiGateway", "Count"],
+                  [".", "4XXError"],
+                  [".", "5XXError"]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}",
+                "title": "API Gateway Requests"
+              }
+            }
+          ]
+        }
+
+Conditions:
+  HasAlertEmail: !Not [!Equals [!Ref AlertEmail, ""]]
+
+Outputs:
+  AlarmTopicArn:
+    Value: !Ref AlarmTopic
+    Description: SNS topic for CloudWatch alarms
+
+  LambdaLogGroupName:
+    Value: !Ref LambdaLogGroup
+
+  ApiLogGroupName:
+    Value: !Ref ApiLogGroup
+
+  DashboardUrl:
+    Value: !Sub "https://console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=BudgetBliss-${Environment}"
+    Description: CloudWatch Dashboard URL

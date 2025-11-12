@@ -22,6 +22,15 @@ provider:
     MPESA_CONSUMER_SECRET: ${env:MPESA_CONSUMER_SECRET, ''}
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
     NODE_ENV: production
+    # SNS Topics (replace with actual ARNs after deploying infrastructure)
+    SNS_NOTIFICATIONS_TOPIC: ${env:SNS_NOTIFICATIONS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissNotifications-${self:provider.stage}'}
+    SNS_DAILY_TIPS_TOPIC: ${env:SNS_DAILY_TIPS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissDailyTips-${self:provider.stage}'}
+    SNS_BUDGET_ALERTS_TOPIC: ${env:SNS_BUDGET_ALERTS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissBudgetAlerts-${self:provider.stage}'}
+    SNS_TRANSACTION_ERRORS_TOPIC: ${env:SNS_TRANSACTION_ERRORS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissTransactionErrors-${self:provider.stage}'}
+    # S3 Buckets
+    LAMBDA_CODE_BUCKET: ${env:LAMBDA_CODE_BUCKET, 'budgetbliss-lambda-code-${self:provider.stage}-ACCOUNT_ID'}
+    # EventBridge
+    EVENT_BUS_NAME: ${env:EVENT_BUS_NAME, 'BudgetBlissEventBus-${self:provider.stage}'}
   
   iam:
     role:
@@ -87,6 +96,22 @@ provider:
           Action:
             - xray:PutTraceSegments
             - xray:PutTelemetryRecords
+          Resource: "*"
+        
+        # SNS publish permissions
+        - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource:
+            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissNotifications-*"
+            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissDailyTips-*"
+            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissBudgetAlerts-*"
+            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissTransactionErrors-*"
+        
+        # EventBridge PutEvents permission
+        - Effect: Allow
+          Action:
+            - events:PutEvents
           Resource: "*"
 
 functions:

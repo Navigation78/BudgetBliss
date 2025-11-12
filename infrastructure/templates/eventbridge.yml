@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "EventBridge Event Bus and rules for async processing in Budget Bliss"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+Resources:
+  # Custom Event Bus for BudgetBliss events
+  BudgetBlissEventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: !Sub "BudgetBlissEventBus-${Environment}"
+
+  # Event rule: Transaction created -> categorization lambda
+  TransactionCategorizeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventBusName: !Ref BudgetBlissEventBus
+      Name: !Sub "TransactionCategorize-${Environment}"
+      Description: "Route transaction.created events to categorization lambda"
+      EventPattern:
+        source:
+          - budgetbliss.transactions
+        detail-type:
+          - transaction.created
+      State: ENABLED
+      Targets:
+        - Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:BudgetBliss-CategorizeTransactions-${Environment}"
+          RoleArn: !GetAtt EventBridgeInvokeRole.Arn
+
+  # Event rule: Daily tips generation (scheduled)
+  DailyTipsRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventBusName: default
+      Name: !Sub "DailyTipsGeneration-${Environment}"
+      Description: "Generate daily tips at 08:00 UTC"
+      ScheduleExpression: "cron(0 8 * * ? *)"
+      State: ENABLED
+      Targets:
+        - Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:BudgetBliss-GenerateTips-${Environment}"
+          RoleArn: !GetAtt EventBridgeInvokeRole.Arn
+
+  # IAM Role for EventBridge to invoke Lambda
+  EventBridgeInvokeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "BudgetBlissEventBridgeRole-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: InvokeLambda
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:BudgetBliss-*"
+
+  # Dead-letter queue for failed events (optional)
+  EventDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "BudgetBlissEventDLQ-${Environment}"
+      MessageRetentionPeriod: 1209600  # 14 days
+
+Outputs:
+  EventBusName:
+    Value: !GetAtt BudgetBlissEventBus.Name
+    Description: Custom Event Bus name
+
+  EventBusArn:
+    Value: !GetAtt BudgetBlissEventBus.Arn
+    Description: Custom Event Bus ARN
+
+  TransactionCategorizeRuleArn:
+    Value: !GetAtt TransactionCategorizeRule.Arn
+
+  DailyTipsRuleArn:
+    Value: !GetAtt DailyTipsRule.Arn
+
+  EventDLQUrl:
+    Value: !Ref EventDLQ

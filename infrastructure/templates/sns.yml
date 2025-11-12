@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "SNS Topics for notifications in Budget Bliss"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+  
+  DailyTipsEmail:
+    Type: String
+    Description: "Email address for daily tips subscriptions (optional for dev)"
+    Default: ""
+
+Resources:
+  # Main notifications topic
+  BudgetBlissNotificationsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "BudgetBlissNotifications-${Environment}"
+      DisplayName: "Budget Bliss Notifications"
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Topic for daily tips
+  DailyTipsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "BudgetBlissDailyTips-${Environment}"
+      DisplayName: "Daily Budget Tips"
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Subscription: daily tips to email (dev only)
+  DailyTipsEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasDailyTipsEmail
+    Properties:
+      TopicArn: !Ref DailyTipsTopic
+      Protocol: email
+      Endpoint: !Ref DailyTipsEmail
+
+  # Topic for budget alerts
+  BudgetAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "BudgetBlissBudgetAlerts-${Environment}"
+      DisplayName: "Budget Threshold Alerts"
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Topic for transaction categorization errors
+  TransactionErrorsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "BudgetBlissTransactionErrors-${Environment}"
+      DisplayName: "Transaction Processing Errors"
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # IAM role for Lambda to publish to SNS
+  LambdaSNSPublishRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "BudgetBlissLambdaSNS-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: PublishToSNS
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource:
+                  - !Ref BudgetBlissNotificationsTopic
+                  - !Ref DailyTipsTopic
+                  - !Ref BudgetAlertsTopic
+                  - !Ref TransactionErrorsTopic
+
+Conditions:
+  HasDailyTipsEmail: !Not [!Equals [!Ref DailyTipsEmail, ""]]
+
+Outputs:
+  NotificationsTopicArn:
+    Value: !Ref BudgetBlissNotificationsTopic
+    Description: SNS topic for general notifications
+
+  DailyTipsTopicArn:
+    Value: !Ref DailyTipsTopic
+    Description: SNS topic for daily tips
+
+  BudgetAlertsTopicArn:
+    Value: !Ref BudgetAlertsTopic
+    Description: SNS topic for budget alerts
+
+  TransactionErrorsTopicArn:
+    Value: !Ref TransactionErrorsTopic
+    Description: SNS topic for transaction errors
+
+  LambdaSNSPublishRoleArn:
+    Value: !GetAtt LambdaSNSPublishRole.Arn

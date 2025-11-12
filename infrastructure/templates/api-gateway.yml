@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "API Gateway REST API for Budget Bliss Lambda functions"
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+Resources:
+  BudgetBlissRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub "BudgetBlissAPI-${Environment}"
+      Description: "REST API for BudgetBliss backend"
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # Root resource
+  RootResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BudgetBlissRestApi
+      ParentId: !GetAtt BudgetBlissRestApi.RootResourceId
+      PathPart: api
+
+  # /api/users resource
+  UsersResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BudgetBlissRestApi
+      ParentId: !Ref RootResource
+      PathPart: users
+
+  # /api/transactions resource
+  TransactionsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BudgetBlissRestApi
+      ParentId: !Ref RootResource
+      PathPart: transactions
+
+  # /api/categories resource
+  CategoriesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BudgetBlissRestApi
+      ParentId: !Ref RootResource
+      PathPart: categories
+
+  # /api/budgets resource
+  BudgetsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BudgetBlissRestApi
+      ParentId: !Ref RootResource
+      PathPart: budgets
+
+  # /api/analytics resource
+  AnalyticsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BudgetBlissRestApi
+      ParentId: !Ref RootResource
+      PathPart: analytics
+
+  # /api/dashboard resource
+  DashboardResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BudgetBlissRestApi
+      ParentId: !Ref RootResource
+      PathPart: dashboard
+
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - TransactionsResource
+      - CategoriesResource
+      - BudgetsResource
+      - AnalyticsResource
+      - DashboardResource
+    Properties:
+      RestApiId: !Ref BudgetBlissRestApi
+
+  # API Gateway Stage
+  ApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: !Ref Environment
+      RestApiId: !Ref BudgetBlissRestApi
+      DeploymentId: !Ref ApiDeployment
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          LoggingLevel: INFO
+          DataTraceEnabled: true
+
+Outputs:
+  RestApiId:
+    Value: !Ref BudgetBlissRestApi
+    Description: REST API ID
+  
+  RestApiEndpoint:
+    Value: !Sub "https://${BudgetBlissRestApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+    Description: API Gateway endpoint URL
+
+  UsersResourceId:
+    Value: !Ref UsersResource
+  
+  TransactionsResourceId:
+    Value: !Ref TransactionsResource
+  
+  CategoriesResourceId:
+    Value: !Ref CategoriesResource
+  
+  BudgetsResourceId:
+    Value: !Ref BudgetsResource
+  
+  AnalyticsResourceId:
+    Value: !Ref AnalyticsResource
+  
+  DashboardResourceId:
+    Value: !Ref DashboardResource
