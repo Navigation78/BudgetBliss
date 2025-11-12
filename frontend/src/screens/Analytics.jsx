@@ -1,29 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, AlertTriangle, Target, Award, Calendar } from 'lucide-react';
+import useFetch from '../hooks/useFetch';
+import LoadingSkeleton from '../components/LoadingSkeleton';
+import formatCurrency from '../utils/formatCurrency';
 
 const Analytics = () => {
   const [timeRange, setTimeRange] = useState('7days'); // 7days or 30days
 
-  // Placeholder state for backend data
-  const [categoryData, setCategoryData] = useState([]);
-  const [trendData, setTrendData] = useState([]);
-  const [insights, setInsights] = useState({
-    biggestCategory: { name: '--', amount: 0, percentage: 0 },
-    largestTransaction: { description: '--', amount: 0, date: '--', category: '--' },
-    totalSpending: 0,
-    savingsGoal: { target: 0, current: 0, percentage: 0 }
-  });
+  // Fetch analytics data from backend
+  const { data: analyticsData, loading: analyticsLoading, error: analyticsError, refetch } = useFetch(`/api/analytics?range=${timeRange}`, {}, [timeRange]);
 
-  // Currency formatter
-  const formatCurrency = (amount) => {
-    if (!amount) return '--';
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-      minimumFractionDigits: 0
-    }).format(amount);
+  const safe = analyticsData || {
+    categoryData: [],
+    trendData: [],
+    insights: {
+      biggestCategory: { name: '--', amount: 0, percentage: 0 },
+      largestTransaction: { description: '--', amount: 0, date: '--', category: '--' },
+      totalSpending: 0,
+      savingsGoal: { target: 0, current: 0, percentage: 0 }
+    }
   };
+
+  const { categoryData, trendData, insights } = safe;
 
   // Custom Pie Chart Label
   const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -44,15 +43,6 @@ const Analytics = () => {
       </text>
     );
   };
-
-  // TODO: Add useEffect to fetch analytics from backend
-  // useEffect(() => {
-  //   fetchAnalytics(timeRange).then(data => {
-  //     setCategoryData(data.categoryData);
-  //     setTrendData(data.trendData);
-  //     setInsights(data.insights);
-  //   });
-  // }, [timeRange]);
 
   return (
     <div className="min-h-screen bg-white pt-20">
@@ -88,6 +78,22 @@ const Analytics = () => {
 
         {/* Top Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* show loading or error for the stats */}
+          {analyticsLoading && (
+            <div className="md:col-span-3">
+              <LoadingSkeleton text="Loading analytics..." />
+            </div>
+          )}
+          {analyticsError && (
+            <div className="md:col-span-3 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
+              <p className="text-red-600 font-semibold">Unable to load analytics</p>
+              <p className="text-sm text-gray-700">{analyticsError.message}</p>
+              <div className="mt-3">
+                <button onClick={() => refetch()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+              </div>
+            </div>
+          )}
+
           {/* Total Spending */}
           <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-3">
@@ -133,27 +139,31 @@ const Analytics = () => {
           <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6">
             <h2 className="text-xl font-bold text-[#04080F] mb-4">Spending by Category</h2>
             <div className="h-80 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={renderCustomLabel}
-                    outerRadius={100}
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color || '#8884d8'} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value) => formatCurrency(value)}
-                    contentStyle={{ backgroundColor: '#04080F', border: 'none', borderRadius: '8px', color: 'white' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {analyticsLoading ? (
+                <LoadingSkeleton text="Loading chart..." />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={renderCustomLabel}
+                      outerRadius={100}
+                      dataKey="value"
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color || '#8884d8'} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => formatCurrency(value)}
+                      contentStyle={{ backgroundColor: '#04080F', border: 'none', borderRadius: '8px', color: 'white' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </div>
             {/* Legend */}
             <div className="grid grid-cols-2 gap-2 mt-4">
@@ -171,18 +181,22 @@ const Analytics = () => {
           <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6">
             <h2 className="text-xl font-bold text-[#04080F] mb-4">Daily Spending Trend</h2>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E0E9F6" />
-                  <XAxis dataKey="day" stroke="#3E68A3" style={{ fontSize: '12px' }} />
-                  <YAxis stroke="#3E68A3" style={{ fontSize: '12px' }} tickFormatter={(value) => `${value / 1000}K`} />
-                  <Tooltip 
-                    formatter={(value) => formatCurrency(value)}
-                    contentStyle={{ backgroundColor: '#04080F', border: 'none', borderRadius: '8px', color: 'white' }}
-                  />
-                  <Line type="monotone" dataKey="amount" stroke="#3E68A3" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} />
-                </LineChart>
-              </ResponsiveContainer>
+              {analyticsLoading ? (
+                <LoadingSkeleton text="Loading chart..." />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={trendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E0E9F6" />
+                    <XAxis dataKey="day" stroke="#3E68A3" style={{ fontSize: '12px' }} />
+                    <YAxis stroke="#3E68A3" style={{ fontSize: '12px' }} tickFormatter={(value) => `${value / 1000}K`} />
+                    <Tooltip 
+                      formatter={(value) => formatCurrency(value)}
+                      contentStyle={{ backgroundColor: '#04080F', border: 'none', borderRadius: '8px', color: 'white' }}
+                    />
+                    <Line type="monotone" dataKey="amount" stroke="#3E68A3" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
             <p className="text-sm text-gray-500 mt-2 text-center">
               Average daily spending: {trendData.length ? formatCurrency(trendData.reduce((sum, t) => sum + t.amount, 0) / trendData.length) : '--'}
