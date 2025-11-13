@@ -7,8 +7,11 @@ node_modules/
 # ====================================
 # Environment & Config files
 # ====================================
-.env
-.env.*
+# ignore env files in backend and frontend
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
 config/*.json
 *.local
 
