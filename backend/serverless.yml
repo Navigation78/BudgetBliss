@@ -1,0 +1,536 @@
+service: budgetbliss-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${env:AWS_REGION, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  environment:
+    STAGE: ${self:provider.stage}
+    REGION: ${self:provider.region}
+    USERS_TABLE: budgetbliss-users-${self:provider.stage}
+    TRANSACTIONS_TABLE: budgetbliss-transactions-${self:provider.stage}
+    CATEGORIES_TABLE: budgetbliss-categories-${self:provider.stage}
+    BUDGETS_TABLE: budgetbliss-budgets-${self:provider.stage}
+    TRANSACTION_QUEUE_URL: { Ref: TransactionCategorizeQueue }
+    COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ''}
+    COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ''}
+    MPESA_API_KEY: ${env:MPESA_API_KEY, ''}
+    MPESA_CONSUMER_KEY: ${env:MPESA_CONSUMER_KEY, ''}
+    MPESA_CONSUMER_SECRET: ${env:MPESA_CONSUMER_SECRET, ''}
+    OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    NODE_ENV: production
+    # SNS Topics (replace with actual ARNs after deploying infrastructure)
+    SNS_NOTIFICATIONS_TOPIC: ${env:SNS_NOTIFICATIONS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissNotifications-${self:provider.stage}'}
+    SNS_DAILY_TIPS_TOPIC: ${env:SNS_DAILY_TIPS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissDailyTips-${self:provider.stage}'}
+    SNS_BUDGET_ALERTS_TOPIC: ${env:SNS_BUDGET_ALERTS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissBudgetAlerts-${self:provider.stage}'}
+    SNS_TRANSACTION_ERRORS_TOPIC: ${env:SNS_TRANSACTION_ERRORS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissTransactionErrors-${self:provider.stage}'}
+    # S3 Buckets
+    LAMBDA_CODE_BUCKET: ${env:LAMBDA_CODE_BUCKET, 'budgetbliss-lambda-code-${self:provider.stage}-ACCOUNT_ID'}
+    # EventBridge
+    EVENT_BUS_NAME: ${env:EVENT_BUS_NAME, 'BudgetBlissEventBus-${self:provider.stage}'}
+  
+  iam:
+    role:
+      statements:
+        # DynamoDB permissions
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:BatchGetItem
+            - dynamodb:BatchWriteItem
+          Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/budgetbliss-*"
+        
+        # DynamoDB Streams
+        - Effect: Allow
+          Action:
+            - dynamodb:GetRecords
+            - dynamodb:GetShardIterator
+            - dynamodb:DescribeStream
+            - dynamodb:ListStreams
+            - dynamodb:ListDynamoDBStreams
+          Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/budgetbliss-*/stream/*"
+        
+        # SQS permissions
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource: "arn:aws:sqs:${self:provider.region}:*:budgetbliss-*"
+        
+        # Lambda invocation
+        - Effect: Allow
+          Action:
+            - lambda:InvokeFunction
+            - lambda:InvokeAsync
+          Resource: "*"
+        
+        # Cognito
+        - Effect: Allow
+          Action:
+            - cognito-idp:AdminGetUser
+            - cognito-idp:AdminInitiateAuth
+            - cognito-idp:AdminUserGlobalSignOut
+            - cognito-idp:AdminSetUserPassword
+          Resource: "arn:aws:cognito-idp:${self:provider.region}:*:userpool/*"
+        
+        # CloudWatch Logs
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: "*"
+        
+        # X-Ray tracing
+        - Effect: Allow
+          Action:
+            - xray:PutTraceSegments
+            - xray:PutTelemetryRecords
+          Resource: "*"
+        
+        # SNS publish permissions
+        - Effect: Allow
+          Action:
+            - sns:Publish
+          Resource:
+            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissNotifications-*"
+            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissDailyTips-*"
+            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissBudgetAlerts-*"
+            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissTransactionErrors-*"
+        
+        # EventBridge PutEvents permission
+        - Effect: Allow
+          Action:
+            - events:PutEvents
+          Resource: "*"
+
+functions:
+  # ===================== HTTP ENDPOINTS =====================
+  
+  # User Management
+  createUser:
+    handler: functions/http/users/index.createUser
+    events:
+      - http:
+          path: users
+          method: post
+          cors: true
+    timeout: 30
+    memorySize: 256
+
+  loginUser:
+    handler: functions/http/users/index.loginUser
+    events:
+      - http:
+          path: users/login
+          method: post
+          cors: true
+    timeout: 30
+    memorySize: 256
+
+  getUser:
+    handler: functions/http/users/index.getUser
+    events:
+      - http:
+          path: users/{id}
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  updateUserProfile:
+    handler: functions/http/users/index.updateUserProfile
+    events:
+      - http:
+          path: users/{id}
+          method: put
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  # Transactions
+  createTransaction:
+    handler: functions/http/transactions/index.createTransaction
+    events:
+      - http:
+          path: transactions
+          method: post
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 512
+    environment:
+      TRANSACTION_QUEUE_URL: { Ref: TransactionCategorizeQueue }
+
+  getTransactions:
+    handler: functions/http/transactions/index.getTransactions
+    events:
+      - http:
+          path: transactions
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  updateTransaction:
+    handler: functions/http/transactions/index.updateTransaction
+    events:
+      - http:
+          path: transactions/{id}
+          method: put
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  # Categories
+  createCategory:
+    handler: functions/http/categories/index.createCategory
+    events:
+      - http:
+          path: categories
+          method: post
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  getCategories:
+    handler: functions/http/categories/index.getCategories
+    events:
+      - http:
+          path: categories
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  updateCategory:
+    handler: functions/http/categories/index.updateCategory
+    events:
+      - http:
+          path: categories/{id}
+          method: put
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  # Budgets
+  createBudget:
+    handler: functions/http/budgets/index.createBudget
+    events:
+      - http:
+          path: budgets
+          method: post
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  getBudgets:
+    handler: functions/http/budgets/index.getBudgets
+    events:
+      - http:
+          path: budgets
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  updateBudget:
+    handler: functions/http/budgets/index.updateBudget
+    events:
+      - http:
+          path: budgets/{id}
+          method: put
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: ".*"
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  # ===================== ASYNC/BACKGROUND TASKS =====================
+
+  # M-PESA Webhook - receives transactions from SafariCom
+  mpesaWebhook:
+    handler: functions/async/mpesaWebhookHandler.handler
+    events:
+      - http:
+          path: webhooks/mpesa
+          method: post
+          cors: true
+    timeout: 60
+    memorySize: 512
+
+  # Categorize transactions - triggered by SQS when transaction created
+  categorizeTransaction:
+    handler: functions/async/categorizeTransaction.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [TransactionCategorizeQueue, Arn]
+          batchSize: 5
+          batchWindow: 10
+    timeout: 60
+    memorySize: 512
+    reservedConcurrency: 5
+
+  # Compute dashboard metrics - scheduled every hour
+  computeDashboard:
+    handler: functions/async/computeDashboard.handler
+    events:
+      - schedule:
+          rate: rate(1 hour)
+          enabled: true
+          description: Compute dashboard metrics hourly
+    timeout: 120
+    memorySize: 512
+
+  # Send daily financial tips - scheduled daily at 9 AM
+  sendDailyTip:
+    handler: functions/async/sendDailyTip.handler
+    events:
+      - schedule:
+          rate: cron(0 9 * * ? *)
+          enabled: true
+          description: Send daily financial tips at 9 AM UTC
+    timeout: 60
+    memorySize: 512
+
+  # Create default categories for new users - triggered by DynamoDB Stream
+  createDefaultCategory:
+    handler: functions/async/createDefaultCategory.handler
+    events:
+      - stream:
+          type: dynamodb
+          arn:
+            Fn::GetAtt: [UsersTable, StreamArn]
+          batchSize: 1
+          startingPosition: TRIM_HORIZON
+          filterPatterns:
+            - eventName:
+                - INSERT
+    timeout: 30
+    memorySize: 256
+
+  # Cognito authorizer for token validation
+  cognitoAuthorizer:
+    handler: middleware/auth.cognitoAuthorizer
+    timeout: 30
+    memorySize: 256
+
+resources:
+  Resources:
+    # ===================== DYNAMODB TABLES =====================
+    
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: budgetbliss-users-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: emailIndex
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Application
+            Value: BudgetBliss
+
+    TransactionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: budgetbliss-transactions-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: transactionId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: N
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: transactionId
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: userCreatedAtIndex
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Application
+            Value: BudgetBliss
+
+    CategoriesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: budgetbliss-categories-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: categoryId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: categoryId
+            KeyType: RANGE
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Application
+            Value: BudgetBliss
+
+    BudgetsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: budgetbliss-budgets-${self:provider.stage}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: budgetId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: budgetId
+            KeyType: RANGE
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Application
+            Value: BudgetBliss
+
+    # ===================== SQS QUEUES =====================
+
+    TransactionCategorizeQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: budgetbliss-categorize-queue-${self:provider.stage}
+        VisibilityTimeout: 300
+        MessageRetentionPeriod: 1209600  # 14 days
+        ReceiveMessageWaitTimeSeconds: 20
+        Tags:
+          - Key: Environment
+            Value: ${self:provider.stage}
+          - Key: Application
+            Value: BudgetBliss
+
+    # Dead Letter Queue for failed categorizations
+    TransactionCategorizeDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: budgetbliss-categorize-dlq-${self:provider.stage}
+        MessageRetentionPeriod: 1209600
+
+plugins:
+  - serverless-offline
+  - serverless-dynamodb-local
+  - serverless-plugin-tracing
+
+custom:
+  serverless-offline:
+    httpPort: 3000
+    lambdaPort: 3001
+    websocketPort: 3002
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+      seed: true
+      noStart: false
+    seed:
+      dev:
+        sources:
+          - table: budgetbliss-users-dev
+            sources: [./seeds/users.json]
+          - table: budgetbliss-categories-dev
+            sources: [./seeds/categories.json]

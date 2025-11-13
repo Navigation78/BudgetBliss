@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Home, Utensils, Car, PiggyBank, Gamepad2, Shield, AlertCircle, CheckCircle, Save } from 'lucide-react';
+import useFetch from '../hooks/useFetch';
+import formatCurrency from '../utils/formatCurrency';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 const CreateBudget = () => {
-  // Placeholder before backend data comes in
-  const currentBalance = null; // replace with backend data later
+  // Fetch current user/balance from backend
+  // NOTE: replace '/api/users/me' with your real endpoint when integrated
+  const { data: meData, loading: meLoading, error: meError, refetch } = useFetch('/api/users/me', {}, []);
+  const currentBalance = meData?.currentBalance ?? null; // null until backend returns
 
   // Predefined categories with icons and colors
   const categoryConfig = {
@@ -38,17 +43,9 @@ const CreateBudget = () => {
   };
 
   const calculateAmount = (percentage) => {
-    if (!currentBalance) return 0; // placeholder if backend data missing
-    return (currentBalance * percentage) / 100;
-  };
-
-  const formatCurrency = (amount) => {
-    if (amount === null || amount === 0) return '--'; // placeholder
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-      minimumFractionDigits: 0
-    }).format(amount);
+    if (currentBalance === null || currentBalance === undefined) return null; // unknown until fetch
+    const amt = (Number(currentBalance) * Number(percentage)) / 100;
+    return Math.round(amt);
   };
 
   const handleSaveBudget = () => {
@@ -71,7 +68,22 @@ const CreateBudget = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Budget Categories */}
-          <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Show loading state while fetching balance */}
+              {meLoading && (
+                <div className="p-4">
+                  <LoadingSkeleton text="Loading balance..." />
+                </div>
+              )}
+              {meError && (
+                <div className="p-4 bg-red-50 border-2 border-red-200 rounded-lg">
+                  <p className="text-red-600 font-semibold">Unable to load your balance</p>
+                  <p className="text-sm text-gray-700">{meError.message}</p>
+                  <div className="mt-3">
+                    <button onClick={() => refetch()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+                  </div>
+                </div>
+              )}
             {/* Total Percentage Indicator */}
             <div className={`${isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border-2 rounded-lg p-4`}>
               <div className="flex items-center justify-between">
