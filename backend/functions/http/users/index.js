@@ -158,9 +158,68 @@ const updateUserProfile = withAuthAndErrorHandling(async (event) => {
   };
 });
 
+/**
+ * List Users (GET /users) - Admin only
+ */
+const getUsers = withAuthAndErrorHandling(async (event) => {
+  // Simple admin check - expects 'cognito:groups' contains 'admin'
+  const claims = event.user.claims || {};
+  const groups = claims['cognito:groups'] || [];
+
+  if (!Array.isArray(groups) || !groups.includes('admin')) {
+    return {
+      statusCode: 403,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Forbidden - admin only' }),
+    };
+  }
+
+  const queryParams = event.queryStringParameters || {};
+  const limit = parseInt(queryParams.limit) || 100;
+  const lastKey = queryParams.lastKey || null;
+
+  const result = await userService.listUsers({ limit, lastKey });
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify(result),
+  };
+});
+
+/**
+ * Delete User (DELETE /users/{id}) - soft delete
+ */
+const deleteUser = withAuthAndErrorHandling(async (event) => {
+  const userId = event.pathParameters.id;
+  const requestingUserId = event.user.userId;
+
+  // allow self-delete or admin
+  const claims = event.user.claims || {};
+  const groups = claims['cognito:groups'] || [];
+
+  if (userId !== requestingUserId && (!Array.isArray(groups) || !groups.includes('admin'))) {
+    return {
+      statusCode: 403,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Forbidden - cannot delete this user' }),
+    };
+  }
+
+  await userService.softDeleteUser(userId);
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify({ message: 'User deactivated', userId }),
+  };
+});
+
 module.exports = {
   createUser,
   loginUser,
   getUser,
   updateUserProfile,
+  getUsers,
+  deleteUser,
 };

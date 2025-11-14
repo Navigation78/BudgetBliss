@@ -1,0 +1,358 @@
+openapi: 3.0.3
+info:
+  title: BudgetBliss API
+  version: 1.0.0
+  description: Serverless API for BudgetBliss (Users, Transactions, Categories, Budgets, Analytics, Webhooks)
+servers:
+  - url: https://api.example.com/{stage}
+    variables:
+      stage:
+        default: dev
+components:
+  securitySchemes:
+    CognitoAuthorizer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        userId:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        mpesaNumber:
+          type: string
+        profilePicture:
+          type: string
+        onboardingComplete:
+          type: boolean
+        tipStreak:
+          type: integer
+        lastTipDate:
+          type: string
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+    Transaction:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        userId:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        merchant:
+          type: string
+        categoryId:
+          type: string
+        createdAt:
+          type: integer
+        updatedAt:
+          type: integer
+    Category:
+      type: object
+      properties:
+        categoryId:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        icon:
+          type: string
+        createdAt:
+          type: integer
+    Budget:
+      type: object
+      properties:
+        budgetId:
+          type: string
+        userId:
+          type: string
+        categoryId:
+          type: string
+        amount:
+          type: number
+        period:
+          type: string
+        startDate:
+          type: integer
+        endDate:
+          type: integer
+paths:
+  /users:
+    get:
+      security:
+        - CognitoAuthorizer: []
+      summary: List users (admin)
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: lastKey
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Created
+  /users/{userId}:
+    get:
+      security:
+        - CognitoAuthorizer: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      security:
+        - CognitoAuthorizer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: Deleted
+  /transactions:
+    get:
+      security:
+        - CognitoAuthorizer: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: startDate
+          schema:
+            type: integer
+        - in: query
+          name: endDate
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    post:
+      security:
+        - CognitoAuthorizer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '201':
+          description: Created
+  /transactions/{transactionId}:
+    get:
+      security:
+        - CognitoAuthorizer: []
+      parameters:
+        - in: path
+          name: transactionId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      security:
+        - CognitoAuthorizer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Transaction'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: Deleted
+  /transactions/parse-sms:
+    post:
+      security:
+        - CognitoAuthorizer: []
+      summary: Parse SMS payloads to create transactions (admin/internal)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      raw:
+                        type: string
+                      userId:
+                        type: string
+      responses:
+        '200':
+          description: Parsed
+  /categories:
+    get:
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: OK
+    post:
+      security:
+        - CognitoAuthorizer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+      responses:
+        '201':
+          description: Created
+  /categories/{categoryId}:
+    put:
+      security:
+        - CognitoAuthorizer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: Deleted
+  /budgets:
+    get:
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: OK
+    post:
+      security:
+        - CognitoAuthorizer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Budget'
+      responses:
+        '201':
+          description: Created
+  /budgets/{budgetId}:
+    get:
+      security:
+        - CognitoAuthorizer: []
+      parameters:
+        - in: path
+          name: budgetId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      security:
+        - CognitoAuthorizer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Budget'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: Deleted
+  /analytics/dashboard:
+    get:
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: Dashboard metrics
+  /analytics/tips/daily:
+    get:
+      security:
+        - CognitoAuthorizer: []
+      responses:
+        '200':
+          description: Daily tip
+  /webhooks/mpesa:
+    post:
+      summary: M-PESA webhook endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook received
+security:
+  - CognitoAuthorizer: []

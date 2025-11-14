@@ -89,8 +89,39 @@ const updateCategory = withAuthAndErrorHandling(async (event) => {
   };
 });
 
+/**
+ * Delete Category (DELETE /categories/{id})
+ */
+const deleteCategory = withAuthAndErrorHandling(async (event) => {
+  const userId = event.user.userId;
+  const categoryId = event.pathParameters.id;
+
+  try {
+    await categoryService.deleteCategory(userId, categoryId);
+  } catch (err) {
+    return {
+      statusCode: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ error: err.message || 'Cannot delete category' }),
+    };
+  }
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+    body: JSON.stringify({ message: 'Category deleted', categoryId }),
+  };
+});
+
 module.exports = {
   createCategory,
   getCategories,
   updateCategory,
+  deleteCategory,
 };

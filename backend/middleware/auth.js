@@ -120,6 +120,34 @@ const generatePolicy = (principalId, effect, methodArn, context = {}) => {
  */
 const attachUserContext = async (event) => {
   try {
+    // DEV bypass: if enabled, allow providing a dev user via header for local testing
+    if (process.env.DEV_AUTH_BYPASS === 'true') {
+      const devUserHeader = event.headers?.['x-dev-user'] || event.headers?.['X-Dev-User'];
+      const authHeader = event.headers?.Authorization || event.headers?.authorization;
+
+      if (devUserHeader) {
+        // Expect header value as userId or JSON like {"userId":"...","email":"..."}
+        try {
+          const parsed = JSON.parse(devUserHeader);
+          return {
+            userId: parsed.userId || parsed.sub || parsed.id,
+            email: parsed.email || null,
+            username: parsed.username || null,
+            claims: parsed || {},
+          };
+        } catch (e) {
+          // treat as plain userId
+          return { userId: devUserHeader, email: null, username: null, claims: {} };
+        }
+      }
+
+      // Support Authorization: Bearer dev:<userId>
+      if (authHeader && authHeader.startsWith('Bearer dev:')) {
+        const userId = authHeader.split(':')[1];
+        return { userId, email: null, username: null, claims: { dev: true } };
+      }
+    }
+
     if (event.requestContext?.authorizer) {
       return {
         userId: event.requestContext.authorizer.userId,

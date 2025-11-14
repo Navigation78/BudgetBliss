@@ -14,7 +14,7 @@ provider:
     TRANSACTIONS_TABLE: budgetbliss-transactions-${self:provider.stage}
     CATEGORIES_TABLE: budgetbliss-categories-${self:provider.stage}
     BUDGETS_TABLE: budgetbliss-budgets-${self:provider.stage}
-    TRANSACTION_QUEUE_URL: { Ref: TransactionCategorizeQueue }
+    TRANSACTION_QUEUE_URL: !Ref TransactionCategorizeQueue
     COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ''}
     COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ''}
     MPESA_API_KEY: ${env:MPESA_API_KEY, ''}
@@ -23,15 +23,20 @@ provider:
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
     NODE_ENV: production
     # SNS Topics (replace with actual ARNs after deploying infrastructure)
-    SNS_NOTIFICATIONS_TOPIC: ${env:SNS_NOTIFICATIONS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissNotifications-${self:provider.stage}'}
-    SNS_DAILY_TIPS_TOPIC: ${env:SNS_DAILY_TIPS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissDailyTips-${self:provider.stage}'}
-    SNS_BUDGET_ALERTS_TOPIC: ${env:SNS_BUDGET_ALERTS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissBudgetAlerts-${self:provider.stage}'}
-    SNS_TRANSACTION_ERRORS_TOPIC: ${env:SNS_TRANSACTION_ERRORS_TOPIC, 'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissTransactionErrors-${self:provider.stage}'}
+    SNS_NOTIFICATIONS_TOPIC: ${env:SNS_NOTIFICATIONS_TOPIC,
+      'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissNotifications-${self:provider.stage}'}
+    SNS_DAILY_TIPS_TOPIC: ${env:SNS_DAILY_TIPS_TOPIC,
+      'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissDailyTips-${self:provider.stage}'}
+    SNS_BUDGET_ALERTS_TOPIC: ${env:SNS_BUDGET_ALERTS_TOPIC,
+      'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissBudgetAlerts-${self:provider.stage}'}
+    SNS_TRANSACTION_ERRORS_TOPIC: ${env:SNS_TRANSACTION_ERRORS_TOPIC,
+      'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissTransactionErrors-${self:provider.stage}'}
     # S3 Buckets
-    LAMBDA_CODE_BUCKET: ${env:LAMBDA_CODE_BUCKET, 'budgetbliss-lambda-code-${self:provider.stage}-ACCOUNT_ID'}
+    LAMBDA_CODE_BUCKET: ${env:LAMBDA_CODE_BUCKET,
+      'budgetbliss-lambda-code-${self:provider.stage}-ACCOUNT_ID'}
     # EventBridge
     EVENT_BUS_NAME: ${env:EVENT_BUS_NAME, 'BudgetBlissEventBus-${self:provider.stage}'}
-  
+
   iam:
     role:
       statements:
@@ -46,8 +51,8 @@ provider:
             - dynamodb:DeleteItem
             - dynamodb:BatchGetItem
             - dynamodb:BatchWriteItem
-          Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/budgetbliss-*"
-        
+          Resource: arn:aws:dynamodb:${self:provider.region}:*:table/budgetbliss-*
+
         # DynamoDB Streams
         - Effect: Allow
           Action:
@@ -56,8 +61,8 @@ provider:
             - dynamodb:DescribeStream
             - dynamodb:ListStreams
             - dynamodb:ListDynamoDBStreams
-          Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/budgetbliss-*/stream/*"
-        
+          Resource: arn:aws:dynamodb:${self:provider.region}:*:table/budgetbliss-*/stream/*
+
         # SQS permissions
         - Effect: Allow
           Action:
@@ -65,15 +70,15 @@ provider:
             - sqs:ReceiveMessage
             - sqs:DeleteMessage
             - sqs:GetQueueAttributes
-          Resource: "arn:aws:sqs:${self:provider.region}:*:budgetbliss-*"
-        
+          Resource: arn:aws:sqs:${self:provider.region}:*:budgetbliss-*
+
         # Lambda invocation
         - Effect: Allow
           Action:
             - lambda:InvokeFunction
             - lambda:InvokeAsync
-          Resource: "*"
-        
+          Resource: '*'
+
         # Cognito
         - Effect: Allow
           Action:
@@ -81,42 +86,42 @@ provider:
             - cognito-idp:AdminInitiateAuth
             - cognito-idp:AdminUserGlobalSignOut
             - cognito-idp:AdminSetUserPassword
-          Resource: "arn:aws:cognito-idp:${self:provider.region}:*:userpool/*"
-        
+          Resource: arn:aws:cognito-idp:${self:provider.region}:*:userpool/*
+
         # CloudWatch Logs
         - Effect: Allow
           Action:
             - logs:CreateLogGroup
             - logs:CreateLogStream
             - logs:PutLogEvents
-          Resource: "*"
-        
+          Resource: '*'
+
         # X-Ray tracing
         - Effect: Allow
           Action:
             - xray:PutTraceSegments
             - xray:PutTelemetryRecords
-          Resource: "*"
-        
+          Resource: '*'
+
         # SNS publish permissions
         - Effect: Allow
           Action:
             - sns:Publish
           Resource:
-            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissNotifications-*"
-            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissDailyTips-*"
-            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissBudgetAlerts-*"
-            - "arn:aws:sns:${self:provider.region}:*:BudgetBlissTransactionErrors-*"
-        
+            - arn:aws:sns:${self:provider.region}:*:BudgetBlissNotifications-*
+            - arn:aws:sns:${self:provider.region}:*:BudgetBlissDailyTips-*
+            - arn:aws:sns:${self:provider.region}:*:BudgetBlissBudgetAlerts-*
+            - arn:aws:sns:${self:provider.region}:*:BudgetBlissTransactionErrors-*
+
         # EventBridge PutEvents permission
         - Effect: Allow
           Action:
             - events:PutEvents
-          Resource: "*"
+          Resource: '*'
 
 functions:
   # ===================== HTTP ENDPOINTS =====================
-  
+
   # User Management
   createUser:
     handler: functions/http/users/index.createUser
@@ -148,7 +153,7 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -163,7 +168,67 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  getUsers:
+    handler: functions/http/users/index.getUsers
+    events:
+      - http:
+          path: users
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .* 
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  deleteUser:
+    handler: functions/http/users/index.deleteUser
+    events:
+      - http:
+          path: users/{id}
+          method: delete
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .* 
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  getUsers:
+    handler: functions/http/users/index.getUsers
+    events:
+      - http:
+          path: users
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  deleteUser:
+    handler: functions/http/users/index.deleteUser
+    events:
+      - http:
+          path: users/{id}
+          method: delete
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -179,12 +244,12 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 512
     environment:
-      TRANSACTION_QUEUE_URL: { Ref: TransactionCategorizeQueue }
+      TRANSACTION_QUEUE_URL: !Ref TransactionCategorizeQueue
 
   getTransactions:
     handler: functions/http/transactions/index.getTransactions
@@ -196,7 +261,7 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -211,7 +276,97 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  getTransaction:
+    handler: functions/http/transactions/index.getTransactionById
+    events:
+      - http:
+          path: transactions/{id}
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  deleteTransaction:
+    handler: functions/http/transactions/index.deleteTransaction
+    events:
+      - http:
+          path: transactions/{id}
+          method: delete
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  parseSms:
+    handler: functions/http/transactions/index.parseSms
+    events:
+      - http:
+          path: transactions/parse-sms
+          method: post
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  getTransactionById:
+    handler: functions/http/transactions/index.getTransactionById
+    events:
+      - http:
+          path: transactions/{id}
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  deleteTransaction:
+    handler: functions/http/transactions/index.deleteTransaction
+    events:
+      - http:
+          path: transactions/{id}
+          method: delete
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  parseSms:
+    handler: functions/http/transactions/index.parseSms
+    events:
+      - http:
+          path: transactions/parse-sms
+          method: post
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -227,7 +382,7 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -242,7 +397,7 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -257,7 +412,37 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  deleteCategory:
+    handler: functions/http/categories/index.deleteCategory
+    events:
+      - http:
+          path: categories/{id}
+          method: delete
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  deleteCategory:
+    handler: functions/http/categories/index.deleteCategory
+    events:
+      - http:
+          path: categories/{id}
+          method: delete
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -273,7 +458,7 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -288,7 +473,7 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -303,7 +488,128 @@ functions:
           authorizer:
             type: TOKEN
             identitySource: method.request.header.Authorization
-            validationExpression: ".*"
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  getBudget:
+    handler: functions/http/budgets/index.getBudgetById
+    events:
+      - http:
+          path: budgets/{id}
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  deleteBudget:
+    handler: functions/http/budgets/index.deleteBudget
+    events:
+      - http:
+          path: budgets/{id}
+          method: delete
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  # Analytics HTTP endpoints (read-only)
+  getDashboard:
+    handler: functions/http/analytics/index.getDashboard
+    events:
+      - http:
+          path: analytics/dashboard
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  getDailyTip:
+    handler: functions/http/analytics/index.getDailyTip
+    events:
+      - http:
+          path: analytics/tips/daily
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  getBudgetById:
+    handler: functions/http/budgets/index.getBudgetById
+    events:
+      - http:
+          path: budgets/{id}
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  deleteBudget:
+    handler: functions/http/budgets/index.deleteBudget
+    events:
+      - http:
+          path: budgets/{id}
+          method: delete
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  analyticsDashboard:
+    handler: functions/http/analytics/index.getDashboard
+    events:
+      - http:
+          path: analytics/dashboard
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
+            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  analyticsTipsDaily:
+    handler: functions/http/analytics/index.getDailyTip
+    events:
+      - http:
+          path: analytics/tips/daily
+          method: get
+          cors: true
+          authorizer:
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+            validationExpression: .*
             resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
@@ -326,8 +632,7 @@ functions:
     handler: functions/async/categorizeTransaction.handler
     events:
       - sqs:
-          arn:
-            Fn::GetAtt: [TransactionCategorizeQueue, Arn]
+          arn: !GetAtt TransactionCategorizeQueue.Arn
           batchSize: 5
           batchWindow: 10
     timeout: 60
@@ -362,8 +667,7 @@ functions:
     events:
       - stream:
           type: dynamodb
-          arn:
-            Fn::GetAtt: [UsersTable, StreamArn]
+          arn: !GetAtt UsersTable.StreamArn
           batchSize: 1
           startingPosition: TRIM_HORIZON
           filterPatterns:
@@ -381,7 +685,7 @@ functions:
 resources:
   Resources:
     # ===================== DYNAMODB TABLES =====================
-    
+
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -421,7 +725,7 @@ resources:
           - AttributeName: transactionId
             AttributeType: S
           - AttributeName: createdAt
-            AttributeType: N
+            AttributeType: 'N'
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
@@ -493,7 +797,7 @@ resources:
       Properties:
         QueueName: budgetbliss-categorize-queue-${self:provider.stage}
         VisibilityTimeout: 300
-        MessageRetentionPeriod: 1209600  # 14 days
+        MessageRetentionPeriod: 1209600 # 14 days
         ReceiveMessageWaitTimeSeconds: 20
         Tags:
           - Key: Environment
@@ -531,6 +835,8 @@ custom:
       dev:
         sources:
           - table: budgetbliss-users-dev
-            sources: [./seeds/users.json]
+            sources:
+              - ./seeds/users.json
           - table: budgetbliss-categories-dev
-            sources: [./seeds/categories.json]
+            sources:
+              - ./seeds/categories.json

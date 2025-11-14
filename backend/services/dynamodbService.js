@@ -183,6 +183,29 @@ const batchWriteItems = async (tableName, items) => {
   }
 };
 
+/**
+ * Scan items (use sparingly)
+ */
+const scanItems = async (tableName, options = {}) => {
+  try {
+    const params = {
+      TableName: tables[tableName],
+      Limit: options.limit || 100,
+      ExclusiveStartKey: options.exclusiveStartKey || undefined,
+    };
+
+    const result = await dynamodb.scan(params).promise();
+    return {
+      items: result.Items,
+      count: result.Count,
+      lastEvaluatedKey: result.LastEvaluatedKey,
+    };
+  } catch (error) {
+    console.error(`Error scanning ${tableName}:`, error);
+    throw error;
+  }
+};
+
 module.exports = {
   dynamodb,
   tables,
@@ -193,4 +216,5 @@ module.exports = {
   queryItems,
   batchGetItems,
   batchWriteItems,
+  scanItems,
 };
