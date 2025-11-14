@@ -229,6 +229,35 @@ const deleteUser = async (userId) => {
   }
 };
 
+/**
+ * Soft delete user (mark inactive)
+ */
+const softDeleteUser = async (userId) => {
+  try {
+    // Ensure user exists
+    await getUserById(userId);
+
+    return await db.updateItem('users', { userId }, { active: false, deletedAt: Date.now() });
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * List users (admin)
+ */
+const listUsers = async ({ limit = 100, lastKey = null } = {}) => {
+  try {
+    const result = await db.scanItems('users', { limit, exclusiveStartKey: lastKey });
+    return {
+      users: result.items,
+      lastKey: result.lastEvaluatedKey,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   createUser,
   getUserById,
@@ -237,4 +266,6 @@ module.exports = {
   completeOnboarding,
   getUserStats,
   deleteUser,
+  softDeleteUser,
+  listUsers,
 };

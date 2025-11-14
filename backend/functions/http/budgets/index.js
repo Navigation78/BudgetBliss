@@ -103,8 +103,52 @@ const updateBudget = withAuthAndErrorHandling(async (event) => {
   };
 });
 
+/**
+ * Get Budget by ID (GET /budgets/{id})
+ */
+const getBudgetById = withAuthAndErrorHandling(async (event) => {
+  const userId = event.user.userId;
+  const budgetId = event.pathParameters.id;
+
+  const budget = await budgetService.getBudget(userId, budgetId);
+
+  if (!budget) {
+    return {
+      statusCode: 404,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Budget not found' }),
+    };
+  }
+
+  const progress = await budgetService.getBudgetProgress(userId, budgetId, transactionService);
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify({ budget, progress }),
+  };
+});
+
+/**
+ * Delete Budget (DELETE /budgets/{id})
+ */
+const deleteBudget = withAuthAndErrorHandling(async (event) => {
+  const userId = event.user.userId;
+  const budgetId = event.pathParameters.id;
+
+  await budgetService.deleteBudget(userId, budgetId);
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify({ message: 'Budget deleted', budgetId }),
+  };
+});
+
 module.exports = {
   createBudget,
   getBudgets,
   updateBudget,
+  getBudgetById,
+  deleteBudget,
 };

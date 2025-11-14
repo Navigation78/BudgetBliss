@@ -244,11 +244,43 @@ const getTransactionStats = async (userId, options = {}) => {
   }
 };
 
+/**
+ * Helper: parse raw SMS message and create transaction (used by parse-sms endpoint)
+ */
+const mpesaParser = require('../utils/mpesaParser');
+
+const parseAndCreateFromSms = async (msg) => {
+  try {
+    const parsed = mpesaParser.parseMessage(msg.raw || msg.message || '');
+    if (!parsed) return { error: 'Unable to parse message', raw: msg };
+
+    // find user by msisdn is handled by webhook; here we expect msg.userId optionally
+    const userId = msg.userId;
+    if (!userId) return { error: 'Missing userId for SMS parsing', raw: msg };
+
+    const transaction = await createTransaction(userId, {
+      amount: parsed.amount,
+      type: parsed.type === 'received' ? 'income' : 'expense',
+      description: parsed.description || parsed.merchant || 'Parsed SMS',
+      reference: parsed.reference,
+      mpesaCode: parsed.mpesaCode,
+      categoryId: 'UNCATEGORIZED',
+      timestamp: parsed.timestamp || Date.now(),
+    });
+
+    return { transaction };
+  } catch (error) {
+    return { error: error.message };
+  }
+};
+
 module.exports = {
   createTransaction,
   triggerCategorization,
   getTransactions,
   getTransaction,
+  getTransactionById: getTransaction,
+  parseAndCreateFromSms,
   updateTransaction,
   deleteTransaction,
   getTransactionsByCategory,

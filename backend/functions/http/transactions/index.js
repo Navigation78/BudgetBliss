@@ -89,8 +89,84 @@ const updateTransaction = withAuthAndErrorHandling(async (event) => {
   };
 });
 
+/**
+ * Get Transaction by ID (GET /transactions/{id})
+ */
+const getTransactionById = withAuthAndErrorHandling(async (event) => {
+  const userId = event.user.userId;
+  const transactionId = event.pathParameters.id;
+
+  const transaction = await transactionService.getTransactionById(userId, transactionId);
+
+  if (!transaction) {
+    return {
+      statusCode: 404,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ error: 'Transaction not found' }),
+    };
+  }
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+    body: JSON.stringify({ transaction }),
+  };
+});
+
+/**
+ * Delete Transaction (DELETE /transactions/{id})
+ */
+const deleteTransaction = withAuthAndErrorHandling(async (event) => {
+  const userId = event.user.userId;
+  const transactionId = event.pathParameters.id;
+
+  await transactionService.deleteTransaction(userId, transactionId);
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+    body: JSON.stringify({ message: 'Transaction deleted', transactionId }),
+  };
+});
+
+/**
+ * Parse SMS (POST /transactions/parse-sms)
+ * Admin/internal endpoint for testing SMS parser
+ */
+const parseSms = withAuthAndErrorHandling(async (event) => {
+  const body = JSON.parse(event.body || '{}');
+  const messages = body.messages || [];
+  const results = [];
+
+  for (const msg of messages) {
+    const parsed = await transactionService.parseAndCreateFromSms(msg);
+    results.push(parsed);
+  }
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+    body: JSON.stringify({ parsed: results }),
+  };
+});
+
 module.exports = {
   createTransaction,
   getTransactions,
   updateTransaction,
+  getTransactionById,
+  deleteTransaction,
+  parseSms,
 };

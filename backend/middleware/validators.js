@@ -40,6 +40,17 @@ const transactionSchemas = {
     timestamp: Joi.date().default(() => new Date()),
   }).strict(),
 
+  parseSms: Joi.object({
+    messages: Joi.array().items(
+      Joi.object({
+        raw: Joi.string().required(),
+        userId: Joi.string().uuid(),
+        source: Joi.string().optional(),
+        receivedAt: Joi.date().optional(),
+      }).strict()
+    ).required(),
+  }).strict(),
+
   updateTransaction: Joi.object({
     categoryId: Joi.string().uuid(),
     description: Joi.string().max(500),
