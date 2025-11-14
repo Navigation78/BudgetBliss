@@ -22,7 +22,6 @@ const userSchemas = {
 
   updateUserProfile: Joi.object({
     username: Joi.string().alphanum().min(3).max(30),
-    email: Joi.string().email(),
     mpesaNumber: Joi.string().regex(/^254[0-9]{9}$/),
     profilePicture: Joi.string().uri(),
   }).strict().min(1),
@@ -34,14 +33,13 @@ const transactionSchemas = {
     amount: Joi.number().positive().required(),
     type: Joi.string().valid('income', 'expense').required(),
     description: Joi.string().max(500),
-    categoryId: Joi.string().uuid(),
+    categoryId: Joi.string(),
     reference: Joi.string().max(100),
     mpesaCode: Joi.string(),
-    timestamp: Joi.date().default(() => new Date()),
   }).strict(),
 
   updateTransaction: Joi.object({
-    categoryId: Joi.string().uuid(),
+    categoryId: Joi.string(),
     description: Joi.string().max(500),
     amount: Joi.number().positive(),
   }).strict().min(1),

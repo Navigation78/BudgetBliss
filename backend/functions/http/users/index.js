@@ -158,9 +158,79 @@ const updateUserProfile = withAuthAndErrorHandling(async (event) => {
   };
 });
 
+/**
+ * Get Users (GET /users) - Admin only
+ * Protected endpoint - requires auth and admin role
+ */
+const getUsers = withAuthAndErrorHandling(async (event) => {
+  // Check if user is admin
+  if (!event.user.claims?.['cognito:groups']?.includes('admin')) {
+    return {
+      statusCode: 403,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        error: 'Forbidden - Admin access required',
+      }),
+    };
+  }
+
+  const queryParams = event.queryStringParameters || {};
+  const limit = parseInt(queryParams.limit) || 50;
+  const users = await userService.listUsers(limit);
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+    body: JSON.stringify({
+      users,
+    }),
+  };
+});
+
+/**
+ * Delete User (DELETE /users/{id})
+ * Protected endpoint - requires auth
+ * Soft delete only
+ */
+const deleteUser = withAuthAndErrorHandling(async (event) => {
+  const userId = event.pathParameters.id;
+  const requestingUserId = event.user.userId;
+
+  // Users can only delete their own account
+  if (userId !== requestingUserId) {
+    return {
+      statusCode: 403,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        error: 'Forbidden - Can only delete your own account',
+      }),
+    };
+  }
+
+  await userService.softDeleteUser(userId);
+
+  return {
+    statusCode: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+  };
+});
+
 module.exports = {
   createUser,
   loginUser,
   getUser,
   updateUserProfile,
+  getUsers,
+  deleteUser,
 };
