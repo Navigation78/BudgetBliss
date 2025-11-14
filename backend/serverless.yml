@@ -5,7 +5,7 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: nodejs18.x
-  region: ${env:AWS_REGION, 'us-east-1'}
+  region: us-east-1
   stage: ${opt:stage, 'dev'}
   environment:
     STAGE: ${self:provider.stage}
@@ -14,7 +14,8 @@ provider:
     TRANSACTIONS_TABLE: budgetbliss-transactions-${self:provider.stage}
     CATEGORIES_TABLE: budgetbliss-categories-${self:provider.stage}
     BUDGETS_TABLE: budgetbliss-budgets-${self:provider.stage}
-    TRANSACTION_QUEUE_URL: !Ref TransactionCategorizeQueue
+    TRANSACTION_QUEUE_URL:
+      Ref: TransactionCategorizeQueue
     COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ''}
     COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ''}
     MPESA_API_KEY: ${env:MPESA_API_KEY, ''}
@@ -120,9 +121,9 @@ provider:
           Resource: '*'
 
 functions:
-  # ===================== HTTP ENDPOINTS =====================
+  # Clean, deduplicated HTTP endpoint mappings
 
-  # User Management
+  # Users
   createUser:
     handler: functions/http/users/index.createUser
     events:
@@ -143,6 +144,16 @@ functions:
     timeout: 30
     memorySize: 256
 
+  getUsers:
+    handler: functions/http/users/index.getUsers
+    events:
+      - http:
+          path: users
+          method: get
+          cors: true
+    timeout: 30
+    memorySize: 256
+
   getUser:
     handler: functions/http/users/index.getUser
     events:
@@ -150,11 +161,6 @@ functions:
           path: users/{id}
           method: get
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -165,26 +171,6 @@ functions:
           path: users/{id}
           method: put
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  getUsers:
-    handler: functions/http/users/index.getUsers
-    events:
-      - http:
-          path: users
-          method: get
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .* 
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -195,41 +181,6 @@ functions:
           path: users/{id}
           method: delete
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .* 
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  getUsers:
-    handler: functions/http/users/index.getUsers
-    events:
-      - http:
-          path: users
-          method: get
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  deleteUser:
-    handler: functions/http/users/index.deleteUser
-    events:
-      - http:
-          path: users/{id}
-          method: delete
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -241,15 +192,11 @@ functions:
           path: transactions
           method: post
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 512
     environment:
-      TRANSACTION_QUEUE_URL: !Ref TransactionCategorizeQueue
+      TRANSACTION_QUEUE_URL:
+        Ref: TransactionCategorizeQueue
 
   getTransactions:
     handler: functions/http/transactions/index.getTransactions
@@ -258,26 +205,6 @@ functions:
           path: transactions
           method: get
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  updateTransaction:
-    handler: functions/http/transactions/index.updateTransaction
-    events:
-      - http:
-          path: transactions/{id}
-          method: put
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -288,11 +215,16 @@ functions:
           path: transactions/{id}
           method: get
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  updateTransaction:
+    handler: functions/http/transactions/index.updateTransaction
+    events:
+      - http:
+          path: transactions/{id}
+          method: put
+          cors: true
     timeout: 30
     memorySize: 256
 
@@ -303,11 +235,6 @@ functions:
           path: transactions/{id}
           method: delete
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -318,56 +245,6 @@ functions:
           path: transactions/parse-sms
           method: post
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  getTransactionById:
-    handler: functions/http/transactions/index.getTransactionById
-    events:
-      - http:
-          path: transactions/{id}
-          method: get
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  deleteTransaction:
-    handler: functions/http/transactions/index.deleteTransaction
-    events:
-      - http:
-          path: transactions/{id}
-          method: delete
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  parseSms:
-    handler: functions/http/transactions/index.parseSms
-    events:
-      - http:
-          path: transactions/parse-sms
-          method: post
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -379,11 +256,6 @@ functions:
           path: categories
           method: post
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -394,11 +266,6 @@ functions:
           path: categories
           method: get
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -409,11 +276,6 @@ functions:
           path: categories/{id}
           method: put
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -424,26 +286,6 @@ functions:
           path: categories/{id}
           method: delete
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  deleteCategory:
-    handler: functions/http/categories/index.deleteCategory
-    events:
-      - http:
-          path: categories/{id}
-          method: delete
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -455,11 +297,6 @@ functions:
           path: budgets
           method: post
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -470,87 +307,6 @@ functions:
           path: budgets
           method: get
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  updateBudget:
-    handler: functions/http/budgets/index.updateBudget
-    events:
-      - http:
-          path: budgets/{id}
-          method: put
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  getBudget:
-    handler: functions/http/budgets/index.getBudgetById
-    events:
-      - http:
-          path: budgets/{id}
-          method: get
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  deleteBudget:
-    handler: functions/http/budgets/index.deleteBudget
-    events:
-      - http:
-          path: budgets/{id}
-          method: delete
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  # Analytics HTTP endpoints (read-only)
-  getDashboard:
-    handler: functions/http/analytics/index.getDashboard
-    events:
-      - http:
-          path: analytics/dashboard
-          method: get
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
-    timeout: 30
-    memorySize: 256
-
-  getDailyTip:
-    handler: functions/http/analytics/index.getDailyTip
-    events:
-      - http:
-          path: analytics/tips/daily
-          method: get
-          cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -561,11 +317,16 @@ functions:
           path: budgets/{id}
           method: get
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
+    timeout: 30
+    memorySize: 256
+
+  updateBudget:
+    handler: functions/http/budgets/index.updateBudget
+    events:
+      - http:
+          path: budgets/{id}
+          method: put
+          cors: true
     timeout: 30
     memorySize: 256
 
@@ -576,41 +337,27 @@ functions:
           path: budgets/{id}
           method: delete
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
-  analyticsDashboard:
+  # Analytics
+  getDashboard:
     handler: functions/http/analytics/index.getDashboard
     events:
       - http:
           path: analytics/dashboard
           method: get
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
-  analyticsTipsDaily:
+  getDailyTip:
     handler: functions/http/analytics/index.getDailyTip
     events:
       - http:
           path: analytics/tips/daily
           method: get
           cors: true
-          authorizer:
-            type: TOKEN
-            identitySource: method.request.header.Authorization
-            validationExpression: .*
-            resultTtlInSeconds: 300
     timeout: 30
     memorySize: 256
 
@@ -632,9 +379,9 @@ functions:
     handler: functions/async/categorizeTransaction.handler
     events:
       - sqs:
-          arn: !GetAtt TransactionCategorizeQueue.Arn
+          arn:
+            Fn::GetAtt: [TransactionCategorizeQueue, Arn]
           batchSize: 5
-          batchWindow: 10
     timeout: 60
     memorySize: 512
     reservedConcurrency: 5
@@ -667,7 +414,8 @@ functions:
     events:
       - stream:
           type: dynamodb
-          arn: !GetAtt UsersTable.StreamArn
+          arn:
+            Fn::GetAtt: [UsersTable, StreamArn]
           batchSize: 1
           startingPosition: TRIM_HORIZON
           filterPatterns:
@@ -681,6 +429,7 @@ functions:
     handler: middleware/auth.cognitoAuthorizer
     timeout: 30
     memorySize: 256
+
 
 resources:
   Resources:
