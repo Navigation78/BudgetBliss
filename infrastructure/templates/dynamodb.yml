@@ -6,8 +6,7 @@ Description: >
 
 Resources:
 
-  #########################
-  # Users Table
+    # Users Table
   #########################
   UsersTable:
     Type: AWS::DynamoDB::Table
@@ -24,7 +23,7 @@ Resources:
         - Key: Project
           Value: BudgetBliss
 
-  #########################
+  
   # Categories Table
   #########################
   CategoriesTable:
@@ -52,7 +51,6 @@ Resources:
         - Key: Project
           Value: BudgetBliss
 
-  #########################
   # Transactions Table
   #########################
   TransactionsTable:
@@ -80,7 +78,7 @@ Resources:
         - Key: Project
           Value: BudgetBliss
 
-  #########################
+
   # Budgets Table
   #########################
   BudgetsTable:
@@ -108,7 +106,7 @@ Resources:
         - Key: Project
           Value: BudgetBliss
 
-  #########################
+  
   # Lambda Trigger for Default Category
   #########################
   CreateDefaultCategoryLambda:

@@ -38,6 +38,17 @@ const transactionSchemas = {
     mpesaCode: Joi.string(),
   }).strict(),
 
+  parseSms: Joi.object({
+    messages: Joi.array().items(
+      Joi.object({
+        raw: Joi.string().required(),
+        userId: Joi.string().uuid(),
+        source: Joi.string().optional(),
+        receivedAt: Joi.date().optional(),
+      }).strict()
+    ).required(),
+  }).strict(),
+
   updateTransaction: Joi.object({
     categoryId: Joi.string(),
     description: Joi.string().max(500),

@@ -91,7 +91,10 @@ const updateTransaction = withAuthAndErrorHandling(async (event) => {
 
 /**
  * Get Transaction by ID (GET /transactions/{id})
+<<<<<<< HEAD
  * Protected endpoint - requires auth
+=======
+>>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
  */
 const getTransactionById = withAuthAndErrorHandling(async (event) => {
   const userId = event.user.userId;
@@ -99,19 +102,40 @@ const getTransactionById = withAuthAndErrorHandling(async (event) => {
 
   const transaction = await transactionService.getTransactionById(userId, transactionId);
 
+<<<<<<< HEAD
+=======
+  if (!transaction) {
+    return {
+      statusCode: 404,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({ error: 'Transaction not found' }),
+    };
+  }
+
+>>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
   return {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
     },
+<<<<<<< HEAD
     body: JSON.stringify(transaction),
+=======
+    body: JSON.stringify({ transaction }),
+>>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
   };
 });
 
 /**
  * Delete Transaction (DELETE /transactions/{id})
+<<<<<<< HEAD
  * Protected endpoint - requires auth
+=======
+>>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
  */
 const deleteTransaction = withAuthAndErrorHandling(async (event) => {
   const userId = event.user.userId;
@@ -120,14 +144,24 @@ const deleteTransaction = withAuthAndErrorHandling(async (event) => {
   await transactionService.deleteTransaction(userId, transactionId);
 
   return {
+<<<<<<< HEAD
     statusCode: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
+=======
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+    body: JSON.stringify({ message: 'Transaction deleted', transactionId }),
+>>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
   };
 });
 
 /**
+<<<<<<< HEAD
  * Parse SMS to Transaction (POST /transactions/parse-sms)
  * Protected endpoint - admin only
  */
@@ -170,6 +204,19 @@ const parseSms = withAuthAndErrorHandling(async (event) => {
     } catch (error) {
       results.push({ success: false, error: error.message });
     }
+=======
+ * Parse SMS (POST /transactions/parse-sms)
+ * Admin/internal endpoint for testing SMS parser
+ */
+const parseSms = withAuthAndErrorHandling(async (event) => {
+  const body = JSON.parse(event.body || '{}');
+  const messages = body.messages || [];
+  const results = [];
+
+  for (const msg of messages) {
+    const parsed = await transactionService.parseAndCreateFromSms(msg);
+    results.push(parsed);
+>>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
   }
 
   return {
@@ -178,9 +225,13 @@ const parseSms = withAuthAndErrorHandling(async (event) => {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
     },
+<<<<<<< HEAD
     body: JSON.stringify({
       results,
     }),
+=======
+    body: JSON.stringify({ parsed: results }),
+>>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
   };
 });
 
