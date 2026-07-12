@@ -563,7 +563,7 @@ resources:
 
 plugins:
   - serverless-offline
-  - serverless-dynamodb-local
+  - serverless-dynamodb
   - serverless-plugin-tracing
 
 custom:
@@ -571,7 +571,7 @@ custom:
     httpPort: 3000
     lambdaPort: 3001
     websocketPort: 3002
-  dynamodb:
+  serverless-dynamodb:
     stages:
       - dev
     start:

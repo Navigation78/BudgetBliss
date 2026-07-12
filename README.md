@@ -1,4 +1,3 @@
-
 # Budget Bliss - Serverless Personal Finance Tracker
 
 ## Overview
@@ -12,6 +11,7 @@ The system is built using AWS cloud services and follows an event-driven, server
 - [Architecture](#architecture)
 - [System Flow](#system-flow)
 - [Features](#features)
+- [Getting Started](#getting-started)
 - [Backend Components](#backend-components)
 - [Database Design](#database-design-dynamodb)
 - [Automation with EventBridge](#automation-with-eventbridge)
@@ -67,6 +67,67 @@ The application is composed of the following core services:
 
 - Daily financial tips via scheduled jobs
 - Event-driven processing of new transactions
+
+## Getting Started
+
+The project is a monorepo with two independent packages: `frontend` (React + Vite) and `backend` (Serverless Framework + AWS Lambda). Each has its own `package.json`, so dependencies must be installed separately in both.
+
+### Prerequisites
+
+- Node.js (LTS version recommended)
+- npm
+- AWS CLI, configured with credentials (`aws configure`), required for backend deployment
+- Serverless Framework CLI (installed automatically as a dev dependency, but a global install can also be used)
+
+### Frontend
+
+Run the following from the `frontend` directory:
+
+```bash
+# install dependencies
+npm install
+
+# start the Vite dev server (default: http://localhost:5173)
+npm run dev
+```
+
+Other frontend commands:
+
+| Command | Description |
+|---|---|
+| `npm run build` | Builds the production bundle into `dist/` |
+| `npm run preview` | Serves the production build locally for testing |
+| `npm run lint` | Runs ESLint against the codebase |
+
+### Backend
+
+Run the following from the `backend` directory:
+
+```bash
+# install dependencies
+npm install
+
+# check required environment variables are set before running
+npm run validate:env
+
+# start the API locally using serverless-offline (default: http://localhost:3000)
+npm run dev
+```
+
+Other backend commands:
+
+| Command | Description |
+|---|---|
+| `npm run offline` | Same as `dev`, but explicitly pins the port to 3000 |
+| `npm run deploy:dev` | Deploys the backend to AWS under the `dev` stage |
+| `npm run deploy:prod` | Deploys the backend to AWS under the `prod` stage |
+| `npm test` | Runs the Jest test suite |
+| `npm run logs -- -f <functionName>` | Tails CloudWatch logs for a given Lambda function |
+| `npm run invoke -- -f <functionName>` | Invokes a given Lambda function directly |
+
+### Known Issue
+
+The backend `package.json` currently lists `aws-sdk` as `^2.1.x`, which is not a valid semver range and can cause install issues on some npm versions. Update this to a specific version, such as `^2.1.0`, or migrate to AWS SDK v3.
 
 ## Backend Components
 
