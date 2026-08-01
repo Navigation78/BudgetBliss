@@ -4,7 +4,7 @@
  * Sends financial literacy tips and lessons to users
  */
 
-const AWS = require('aws-sdk');
+const AWS = require('../../config/awsConfig');
 const db = require('../../services/dynamodbService');
 
 const sns = new AWS.SNS();

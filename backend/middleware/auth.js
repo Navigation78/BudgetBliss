@@ -3,7 +3,7 @@
  * Handles Cognito token validation and authorization
  */
 
-const AWS = require('aws-sdk');
+const AWS = require('../config/awsConfig');
 const jwt = require('jsonwebtoken');
 
 const cognito = new AWS.CognitoIdentityServiceProvider();

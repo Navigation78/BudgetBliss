@@ -25,16 +25,16 @@ provider:
     NODE_ENV: production
     # SNS Topics (replace with actual ARNs after deploying infrastructure)
     SNS_NOTIFICATIONS_TOPIC: ${env:SNS_NOTIFICATIONS_TOPIC,
-      'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissNotifications-${self:provider.stage}'}
+      'arn:aws:sns:${self:provider.region}:${aws:accountId}:BudgetBlissNotifications-${self:provider.stage}'}
     SNS_DAILY_TIPS_TOPIC: ${env:SNS_DAILY_TIPS_TOPIC,
-      'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissDailyTips-${self:provider.stage}'}
+      'arn:aws:sns:${self:provider.region}:${aws:accountId}:BudgetBlissDailyTips-${self:provider.stage}'}
     SNS_BUDGET_ALERTS_TOPIC: ${env:SNS_BUDGET_ALERTS_TOPIC,
-      'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissBudgetAlerts-${self:provider.stage}'}
+      'arn:aws:sns:${self:provider.region}:${aws:accountId}:BudgetBlissBudgetAlerts-${self:provider.stage}'}
     SNS_TRANSACTION_ERRORS_TOPIC: ${env:SNS_TRANSACTION_ERRORS_TOPIC,
-      'arn:aws:sns:${self:provider.region}:ACCOUNT_ID:BudgetBlissTransactionErrors-${self:provider.stage}'}
+      'arn:aws:sns:${self:provider.region}:${aws:accountId}:BudgetBlissTransactionErrors-${self:provider.stage}'}
     # S3 Buckets
     LAMBDA_CODE_BUCKET: ${env:LAMBDA_CODE_BUCKET,
-      'budgetbliss-lambda-code-${self:provider.stage}-ACCOUNT_ID'}
+      'budgetbliss-lambda-code-${self:provider.stage}-${aws:accountId}'}
     # EventBridge
     EVENT_BUS_NAME: ${env:EVENT_BUS_NAME, 'BudgetBlissEventBus-${self:provider.stage}'}
 

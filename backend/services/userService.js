@@ -4,7 +4,7 @@
  */
 
 const { v4: uuidv4 } = require('uuid');
-const AWS = require('aws-sdk');
+const AWS = require('../config/awsConfig');
 const db = require('./dynamodbService');
 const { UnauthorizedError, ConflictError, NotFoundError } = require('../middleware/errorHandler');
 

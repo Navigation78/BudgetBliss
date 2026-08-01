@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('./dynamodbService');
 const { NotFoundError, ValidationError } = require('../middleware/errorHandler');
 
-const AWS = require('aws-sdk');
+const AWS = require('../config/awsConfig');
 const sqs = new AWS.SQS();
 
 /**
