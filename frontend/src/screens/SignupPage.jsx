@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { apiPost } from '../utils/apiClient';
+import { setCurrentUser } from '../utils/auth';
+import { normalizeMpesaNumber } from '../utils/mpesa';
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -17,6 +20,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const validatePhone = (phone) => {
     // M-Pesa Kenya phone validation: starts with 254 or 0, followed by 7/1 and 8 digits
@@ -25,7 +29,6 @@ export default function SignupPage() {
   };
 
   const validateEmail = (email) => {
-    if (!email) return true; // Email is optional
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
@@ -53,7 +56,8 @@ export default function SignupPage() {
         else if (value.length < 3) error = 'Username must be at least 3 characters';
         break;
       case 'email':
-        if (value && !validateEmail(value)) error = 'Please enter a valid email';
+        if (!value.trim()) error = 'Email is required';
+        else if (!validateEmail(value)) error = 'Please enter a valid email';
         break;
       case 'phone':
         if (!value.trim()) error = 'Phone number is required for M-Pesa';
@@ -73,9 +77,9 @@ export default function SignupPage() {
     return !error;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Mark all fields as touched
     const allTouched = {
       username: true,
@@ -94,11 +98,21 @@ export default function SignupPage() {
     const isConfirmPasswordValid = validateField('confirmPassword', formData.confirmPassword);
 
     if (isUsernameValid && isEmailValid && isPhoneValid && isPasswordValid && isConfirmPasswordValid) {
-      console.log('Form submitted:', formData);
-      alert('Signup successful! Redirecting to login...');
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
+      setIsLoading(true);
+      try {
+        const result = await apiPost('/users', {
+          username: formData.username,
+          email: formData.email,
+          mpesaNumber: normalizeMpesaNumber(formData.phone),
+          password: formData.password,
+        });
+        setCurrentUser(result.user);
+        navigate('/home');
+      } catch (err) {
+        alert(err.message || 'Signup failed, please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -145,7 +159,7 @@ export default function SignupPage() {
           {/* Email (Optional) */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email <span className="text-gray-400 text-xs">(optional)</span>
+              Email <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -287,9 +301,10 @@ export default function SignupPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-md hover:shadow-lg"
+            disabled={isLoading}
+            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-md hover:shadow-lg disabled:cursor-not-allowed"
           >
-            Sign Up
+            {isLoading ? 'Creating account...' : 'Sign Up'}
           </button>
         </form>
 
