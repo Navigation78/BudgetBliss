@@ -1,15 +1,27 @@
-const required = [
-  'APP_STAGE',
+/**
+ * backend/scripts/validateEnv.js
+ */
+const requiredEnvVars = [
+  'STAGE',
   'AWS_REGION',
-  'DYNAMODB_USER_TABLE',
-  'DYNAMODB_TRANSACTION_TABLE',
-  'DYNAMODB_CATEGORY_TABLE'
+  'USERS_TABLE',
+  'TRANSACTIONS_TABLE',
+  'BUDGETS_TABLE',
+  'CATEGORIES_TABLE',
+  'OPENAI_API_KEY',
+  'COGNITO_USER_POOL_ID',
+  'COGNITO_CLIENT_ID'
 ];
 
-const missing = required.filter((k) => !process.env[k]);
-if (missing.length) {
-  console.error('Missing required environment variables:', missing.join(', '));
-  process.exit(1);
+function validateEnv() {
+  const missing = requiredEnvVars.filter((varName) => !process.env[varName]);
+
+  if (missing.length > 0) {
+    console.error(` Missing required environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+
+  console.log(' Environment variables validated successfully.');
 }
 
-console.log('Environment validation passed');
+validateEnv();

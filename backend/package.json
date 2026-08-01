@@ -9,7 +9,7 @@
     "deploy:prod": "serverless deploy --stage prod",
     "dev": "serverless offline start",
     "offline": "serverless offline start --httpPort 3000",
-    "validate:env": "node ./backend/scripts/validateEnv.js",
+    "validate:env": "node ./scripts/validateEnv.js",
     "test": "jest",
     "logs": "serverless logs -f",
     "invoke": "serverless invoke -f"
