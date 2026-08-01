@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Flame, Award, Lock, CheckCircle, ChevronDown, ChevronUp, Calendar, Trophy, Star } from 'lucide-react';
+import { apiGet } from '../utils/apiClient';
+import { getCurrentUser } from '../utils/auth';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 // --- Reusable Components ---
 const StatsCard = ({ Icon, label, value, color }) => (
@@ -87,8 +90,36 @@ const LessonCard = ({ lesson, onToggleExpand, onMarkAsRead, formatDate }) => {
 
 // --- Main Component ---
 const TipsAndStreaks = () => {
-  const [currentStreak, setCurrentStreak] = useState(12);
-  const [totalLessonsCompleted, setTotalLessonsCompleted] = useState(45);
+  const user = getCurrentUser();
+
+  // tipStreak/lastTipDate are updated server-side by the daily tip Lambda
+  // (backend/functions/async/sendDailyTip.js) - not something the client can
+  // increment itself.
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [totalLessonsCompleted, setTotalLessonsCompleted] = useState(0);
+  const [todayTip, setTodayTip] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    if (!user?.userId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const [tipRes, userRes] = await Promise.all([
+        apiGet('/analytics/tips/daily'),
+        apiGet(`/users/${user.userId}`),
+      ]);
+      setTodayTip(tipRes?.tipText || null);
+      setCurrentStreak(userRes?.user?.tipStreak || 0);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.userId]);
+
+  useEffect(() => { load(); }, [load]);
 
   // Dynamic badge calculation
   const badges = [
@@ -98,18 +129,24 @@ const TipsAndStreaks = () => {
     { id: 4, name: 'Budget Legend', daysRequired: 30, icon: '🏆' }
   ].map(badge => ({ ...badge, earned: currentStreak >= badge.daysRequired }));
 
+  // Only "today" is backed by the real API (GET /analytics/tips/daily returns a
+  // single tip, not a lesson library) - the rest is illustrative placeholder
+  // content until the backend has a real lessons endpoint.
   const [lessons, setLessons] = useState([
-    { id: 1, date: '2025-11-07', title: 'The 50/30/20 Budget Rule', content: 'The 50/30/20 rule is...', takeaway: '💡 Key Takeaway: Track one week...', isToday: true, isRead: false, isExpanded: false, isFuture: false },
+    { id: 1, date: new Date().toISOString().slice(0, 10), title: "Today's Financial Tip", content: 'Loading...', takeaway: '', isToday: true, isRead: false, isExpanded: false, isFuture: false },
     { id: 2, date: '2025-11-06', title: 'Emergency Fund Essentials', content: 'An emergency fund is...', takeaway: '💡 Key Takeaway: Automate savings...', isToday: false, isRead: true, isExpanded: false, isFuture: false },
     { id: 3, date: '2025-11-05', title: 'Avoid Lifestyle Inflation', content: 'Lifestyle inflation happens...', takeaway: '💡 Key Takeaway: Allocate 50% of raises...', isToday: false, isRead: true, isExpanded: false, isFuture: false },
-    { id: 4, date: '2025-11-08', title: 'Understanding Compound Interest', content: 'Future lesson - Check back tomorrow!', takeaway: '', isToday: false, isRead: false, isExpanded: false, isFuture: true }
   ]);
+
+  useEffect(() => {
+    if (!todayTip) return;
+    setLessons(prev => prev.map(l => (l.isToday ? { ...l, content: todayTip } : l)));
+  }, [todayTip]);
 
   const handleMarkAsRead = (lessonId) => {
     setLessons(prev =>
       prev.map(lesson => {
         if (lesson.id === lessonId && lesson.isToday && !lesson.isRead) {
-          setCurrentStreak(prevStreak => prevStreak + 1);
           setTotalLessonsCompleted(prevTotal => prevTotal + 1);
           return { ...lesson, isRead: true };
         }
@@ -166,6 +203,17 @@ const TipsAndStreaks = () => {
             </div>
           </div>
         </div>
+
+        {loading && <LoadingSkeleton text="Loading your tips..." />}
+        {error && (
+          <div className="p-4 bg-red-50 border-2 border-red-200 rounded-lg mb-6">
+            <p className="text-red-600 font-semibold">Unable to load today's tip</p>
+            <p className="text-sm text-gray-700">{error.message}</p>
+            <div className="mt-3">
+              <button onClick={() => load()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

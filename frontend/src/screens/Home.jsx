@@ -1,19 +1,72 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, TrendingDown, Wallet, CheckCircle } from 'lucide-react';
-import useFetch from '../hooks/useFetch';
+import { apiGet } from '../utils/apiClient';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import formatCurrency from '../utils/formatCurrency';
 
 const Home = () => {
-  // Fetch dashboard data from backend
-  const { data: dashboardData, loading: dashboardLoading, error: dashboardError, refetch } = useFetch('/api/dashboard');
+  const navigate = useNavigate();
+  const [dashboard, setDashboard] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [categoryNames, setCategoryNames] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const safeData = dashboardData || {
-    moneyIn: null,
-    moneyOut: null,
-    currentBalance: null,
-    financialStatus: null,
-    recentTransactions: []
+  // /analytics/dashboard only returns aggregate totals, so recent transactions
+  // and human-readable category names are fetched separately and merged client-side.
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [dashboardRes, transactionsRes, categories] = await Promise.all([
+        apiGet('/analytics/dashboard'),
+        apiGet('/transactions?limit=5'),
+        apiGet('/categories'),
+      ]);
+      setDashboard(dashboardRes);
+      setTransactions(transactionsRes?.transactions || []);
+      const names = {};
+      (categories || []).forEach((c) => { names[c.categoryId] = c.name; });
+      setCategoryNames(names);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const income = dashboard?.income ?? null;
+  const expenses = dashboard?.expenses ?? null;
+  const balance = dashboard?.balance ?? null;
+
+  // The backend doesn't compute a financial status - derive a simple one from
+  // the income/expense ratio it does give us.
+  const getFinancialStatus = () => {
+    if (income === null || expenses === null) return null;
+    if (income === 0) return expenses > 0 ? 'alert' : 'good';
+    const ratio = expenses / income;
+    if (ratio > 1) return 'alert';
+    if (ratio > 0.8) return 'warning';
+    return 'good';
+  };
+
+  const recentTransactions = transactions.map((t) => ({
+    id: t.transactionId,
+    description: t.description || t.reference || 'Transaction',
+    category: categoryNames[t.categoryId] || (t.categoryId === 'UNCATEGORIZED' ? 'Uncategorized' : t.categoryId),
+    date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '',
+    amount: t.type === 'income' ? t.amount : -t.amount,
+  }));
+
+  const safeData = {
+    moneyIn: income,
+    moneyOut: expenses,
+    currentBalance: balance,
+    financialStatus: getFinancialStatus(),
+    recentTransactions,
   };
 
   const getStatusConfig = (status) => {
@@ -32,8 +85,6 @@ const Home = () => {
   const statusConfig = getStatusConfig(safeData.financialStatus);
   const StatusIcon = statusConfig.icon;
 
-  // use imported formatCurrency util which handles nulls
-
   return (
     <div className="min-h-screen bg-white pt-20">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -45,17 +96,17 @@ const Home = () => {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {dashboardLoading && (
+          {loading && (
             <div className="md:col-span-3">
               <LoadingSkeleton text="Loading dashboard..." />
             </div>
           )}
-          {dashboardError && (
+          {error && (
             <div className="md:col-span-3 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
               <p className="text-red-600 font-semibold">Unable to load dashboard</p>
-              <p className="text-sm text-gray-700">{dashboardError.message}</p>
+              <p className="text-sm text-gray-700">{error.message}</p>
               <div className="mt-3">
-                <button onClick={() => refetch()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+                <button onClick={() => load()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
               </div>
             </div>
           )}
@@ -108,9 +159,8 @@ const Home = () => {
         <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-[#04080F]">Recent Transactions</h2>
-            <button className="text-[#3E68A3] hover:text-[#A1C6EA] font-semibold text-sm transition">View All</button>
           </div>
-          
+
           {safeData.recentTransactions.length === 0 ? (
             <p className="text-gray-500 text-center py-4">No transactions yet</p>
           ) : (
@@ -132,7 +182,10 @@ const Home = () => {
 
         {/* Quick Action */}
         <div className="mt-8 text-center">
-          <button className="bg-[#3E68A3] hover:bg-[#04080F] text-white font-semibold px-8 py-3 rounded-lg transition-colors shadow-lg">
+          <button
+            onClick={() => navigate('/create-budget')}
+            className="bg-[#3E68A3] hover:bg-[#04080F] text-white font-semibold px-8 py-3 rounded-lg transition-colors shadow-lg"
+          >
             Create New Budget
           </button>
         </div>

@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
-import { 
-  User, Mail, Lock, Settings, Bell, Moon, Sun, LogOut, Camera, Smartphone, 
-  CheckCircle, AlertCircle, ChevronDown, ChevronUp, Shield 
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  User, Mail, Lock, Settings, Bell, Moon, Sun, LogOut, Camera, Smartphone,
+  CheckCircle, AlertCircle, ChevronDown, ChevronUp, Shield
 } from 'lucide-react';
+import { apiGet, apiPut } from '../utils/apiClient';
+import { getCurrentUser, clearCurrentUser } from '../utils/auth';
+import { normalizeMpesaNumber, isValidMpesaNumber } from '../utils/mpesa';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 
 // Modal Component
 const Modal = ({ isOpen, onClose, children }) => {
@@ -24,17 +29,48 @@ const Modal = ({ isOpen, onClose, children }) => {
   );
 };
 
-const Profile = ({ initialUserData }) => {
-  const [userData, setUserData] = useState(initialUserData || {
+const Profile = () => {
+  const navigate = useNavigate();
+  const storedUser = getCurrentUser();
+
+  const [userData, setUserData] = useState({
     username: '',
     email: '',
     profilePicture: null,
     mpesaLinked: false,
     mpesaNumber: ''
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [savingUsername, setSavingUsername] = useState(false);
+  const [savingMpesa, setSavingMpesa] = useState(false);
+  const [mpesaInput, setMpesaInput] = useState('');
+
+  const load = useCallback(async () => {
+    if (!storedUser?.userId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiGet(`/users/${storedUser.userId}`);
+      const u = res.user;
+      setUserData({
+        username: u.username || '',
+        email: u.email || '',
+        profilePicture: null,
+        mpesaLinked: Boolean(u.mpesaNumber),
+        mpesaNumber: u.mpesaNumber || '',
+      });
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [storedUser?.userId]);
+
+  useEffect(() => { load(); }, [load]);
 
   const [settingsExpanded, setSettingsExpanded] = useState(false);
-  const [theme, setTheme] = useState('light'); // 'light' or 'dark'
+  const [theme, setTheme] = useState('light'); // 'light' or 'dark' - local only, no backend support yet
   const [notifications, setNotifications] = useState({
     budgetAlerts: true,
     savingsGoals: true,
@@ -45,7 +81,7 @@ const Profile = ({ initialUserData }) => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showMpesaModal, setShowMpesaModal] = useState(false);
 
-  // Profile Picture Upload
+  // Profile Picture Upload - local preview only, backend has no avatar storage
   const handleProfilePictureChange = (file) => {
     if (!file) return;
     const reader = new FileReader();
@@ -55,8 +91,8 @@ const Profile = ({ initialUserData }) => {
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
-      console.log('Logging out...');
-      // call backend logout or redirect
+      clearCurrentUser();
+      navigate('/');
     }
   };
 
@@ -64,14 +100,60 @@ const Profile = ({ initialUserData }) => {
     setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleMpesaLink = (number) => {
-    setUserData(prev => ({ ...prev, mpesaLinked: true, mpesaNumber: number }));
-    alert('M-Pesa authorization request sent!');
+  const openMpesaModal = () => {
+    setMpesaInput(userData.mpesaNumber);
+    setShowMpesaModal(true);
+  };
+
+  const handleMpesaLink = async () => {
+    if (!isValidMpesaNumber(mpesaInput)) {
+      alert('Enter a valid M-Pesa number, e.g. 0712345678');
+      return;
+    }
+    const normalized = normalizeMpesaNumber(mpesaInput);
+    setSavingMpesa(true);
+    try {
+      await apiPut(`/users/${storedUser.userId}`, { mpesaNumber: normalized });
+      setUserData(prev => ({ ...prev, mpesaLinked: true, mpesaNumber: normalized }));
+      setShowMpesaModal(false);
+      alert('M-Pesa authorization request sent!');
+    } catch (err) {
+      alert(err.message || 'Failed to link M-Pesa account');
+    } finally {
+      setSavingMpesa(false);
+    }
+  };
+
+  const handleSaveUsername = async () => {
+    if (!userData.username.trim()) {
+      alert('Username cannot be empty');
+      return;
+    }
+    setSavingUsername(true);
+    try {
+      await apiPut(`/users/${storedUser.userId}`, { username: userData.username });
+      alert('Username updated!');
+    } catch (err) {
+      alert(err.message || 'Failed to update username');
+    } finally {
+      setSavingUsername(false);
+    }
   };
 
   const handlePasswordChange = () => {
-    alert('Password changed successfully!');
+    // Cognito integration (real password verification/change) isn't wired up yet
+    // on the backend - see backend/middleware/auth.js.
+    alert('Password changes are not available yet.');
+    setShowPasswordModal(false);
   };
+
+  if (!storedUser?.userId) {
+    return (
+      <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
+        <p className="text-gray-500">You need to be logged in to view your profile.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pt-20">
@@ -83,6 +165,19 @@ const Profile = ({ initialUserData }) => {
           <p className="text-[#3E68A3]">Manage your account and preferences</p>
         </div>
 
+        {loading && <LoadingSkeleton text="Loading your profile..." />}
+        {error && (
+          <div className="p-4 bg-red-50 border-2 border-red-200 rounded-lg mb-6">
+            <p className="text-red-600 font-semibold">Unable to load your profile</p>
+            <p className="text-sm text-gray-700">{error.message}</p>
+            <div className="mt-3">
+              <button onClick={() => load()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && (
+        <>
         {/* Profile Picture */}
         <div className="bg-gradient-to-br from-[#E0E9F6] to-[#A1C6EA] rounded-lg p-8 mb-6 text-center">
           <div className="relative inline-block">
@@ -131,14 +226,16 @@ const Profile = ({ initialUserData }) => {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setShowMpesaModal(true)}
+                  onClick={openMpesaModal}
                   className="px-4 py-2 bg-white border-2 border-green-500 text-green-700 rounded-lg hover:bg-green-50 transition-colors text-sm font-semibold"
                 >
                   Change Number
                 </button>
                 <button
                   onClick={() => {
-                    if (confirm('Unlink M-Pesa account?')) setUserData(prev => ({ ...prev, mpesaLinked: false, mpesaNumber: '' }));
+                    if (confirm('Unlink M-Pesa account? (This only updates the display - the backend does not yet support clearing this field.)')) {
+                      setUserData(prev => ({ ...prev, mpesaLinked: false }));
+                    }
                   }}
                   className="px-4 py-2 bg-white border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-semibold"
                 >
@@ -156,7 +253,7 @@ const Profile = ({ initialUserData }) => {
                 Link your M-Pesa account to automatically track transactions and get personalized insights.
               </p>
               <button
-                onClick={() => setShowMpesaModal(true)}
+                onClick={openMpesaModal}
                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
               >
                 Link M-Pesa Account
@@ -180,7 +277,13 @@ const Profile = ({ initialUserData }) => {
                   onChange={(e) => setUserData(prev => ({ ...prev, username: e.target.value }))}
                   className="flex-1 px-4 py-2 border-2 border-[#E0E9F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E68A3]"
                 />
-                <button className="px-4 py-2 bg-[#3E68A3] text-white rounded-lg hover:bg-[#04080F] transition-colors font-semibold">Save</button>
+                <button
+                  onClick={handleSaveUsername}
+                  disabled={savingUsername}
+                  className="px-4 py-2 bg-[#3E68A3] text-white rounded-lg hover:bg-[#04080F] transition-colors font-semibold disabled:opacity-50"
+                >
+                  {savingUsername ? 'Saving...' : 'Save'}
+                </button>
               </div>
             </div>
             <div>
@@ -190,8 +293,9 @@ const Profile = ({ initialUserData }) => {
                 <input
                   type="email"
                   value={userData.email}
-                  onChange={(e) => setUserData(prev => ({ ...prev, email: e.target.value }))}
-                  className="flex-1 px-4 py-2 border-2 border-[#E0E9F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E68A3]"
+                  disabled
+                  title="Email changes aren't supported yet"
+                  className="flex-1 px-4 py-2 border-2 border-[#E0E9F6] rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                 />
               </div>
             </div>
@@ -319,8 +423,9 @@ const Profile = ({ initialUserData }) => {
               <label className="text-sm font-semibold text-gray-700 mb-1 block">M-Pesa Phone Number</label>
               <input
                 type="tel"
-                placeholder="+254 712 345 678"
-                onChange={(e) => setUserData(prev => ({ ...prev, mpesaNumber: e.target.value }))}
+                placeholder="0712345678"
+                value={mpesaInput}
+                onChange={(e) => setMpesaInput(e.target.value)}
                 className="w-full px-4 py-2 border-2 border-[#E0E9F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E68A3]"
               />
             </div>
@@ -331,12 +436,15 @@ const Profile = ({ initialUserData }) => {
             </div>
           </div>
           <button
-            onClick={() => handleMpesaLink(userData.mpesaNumber)}
-            className="flex-1 mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+            onClick={handleMpesaLink}
+            disabled={savingMpesa}
+            className="flex-1 mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50"
           >
-            Link Account
+            {savingMpesa ? 'Linking...' : 'Link Account'}
           </button>
         </Modal>
+        </>
+        )}
 
       </main>
     </div>

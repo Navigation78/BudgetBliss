@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { AlertCircle, Eye, EyeOff, Lock, User } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { apiPost } from '../utils/apiClient';
+import { setCurrentUser } from '../utils/auth';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -27,32 +29,36 @@ export default function LoginPage() {
 
   const validateField = (field, value) => {
     let error = '';
-    if (field === 'username' && !value.trim()) error = 'Username is required';
+    if (field === 'email') {
+      if (!value.trim()) error = 'Email is required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Enter a valid email';
+    }
     if (field === 'password' && !value) error = 'Password is required';
     setErrors(prev => ({ ...prev, [field]: error }));
     return !error;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setTouched({ username: true, password: true });
+    setTouched({ email: true, password: true });
 
-    const isUsernameValid = validateField('username', formData.username);
+    const isEmailValid = validateField('email', formData.email);
     const isPasswordValid = validateField('password', formData.password);
 
-    if (isUsernameValid && isPasswordValid) {
+    if (isEmailValid && isPasswordValid) {
       setIsLoading(true);
-
-      // Temporary mock login logic
-      setTimeout(() => {
+      try {
+        const result = await apiPost('/users/login', {
+          email: formData.email,
+          password: formData.password,
+        });
+        setCurrentUser(result.user);
+        navigate('/home');
+      } catch (err) {
+        alert(err.message || 'Invalid login credentials');
+      } finally {
         setIsLoading(false);
-        // For testing, any non-empty username/password can log in
-        if (formData.username && formData.password) {
-          navigate('/home'); // go to home page
-        } else {
-          alert('Invalid login credentials');
-        }
-      }, 1000);
+      }
     }
   };
 
@@ -68,31 +74,31 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Username */}
+          {/* Email */}
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <div className="relative">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                <User size={20} />
+                <Mail size={20} />
               </div>
               <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
-                onBlur={() => handleBlur('username')}
-                placeholder="Enter your username"
+                onBlur={() => handleBlur('email')}
+                placeholder="Enter your email"
                 className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition ${
-                  touched.username && errors.username ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-200'
+                  touched.email && errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-green-200'
                 }`}
-                autoComplete="username"
+                autoComplete="email"
               />
             </div>
-            {touched.username && errors.username && (
+            {touched.email && errors.email && (
               <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
                 <AlertCircle size={14} />
-                <span>{errors.username}</span>
+                <span>{errors.email}</span>
               </div>
             )}
           </div>
