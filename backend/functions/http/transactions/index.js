@@ -1,245 +1,162 @@
 /**
  * Transaction Lambda Handlers
- * Handles transaction-related HTTP requests
  */
 
 const transactionService = require('../../../services/transactionService');
 const { withAuthAndErrorHandling } = require('../../../middleware/errorHandler');
 const { validateBody, transactionSchemas } = require('../../../middleware/validators');
 
+// Reusable response helper
+const response = (statusCode, body) => ({
+  statusCode,
+  headers: {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+  },
+  body: JSON.stringify(body),
+});
+
+// Safe JSON parse
+const parseJSON = (input) => {
+  try {
+    return JSON.parse(input || '{}');
+  } catch {
+    return {};
+  }
+};
+
 /**
- * Create Transaction (POST /transactions)
- * Protected endpoint - requires auth
- * Triggers async categorization
+ * POST /transactions
  */
 const createTransaction = withAuthAndErrorHandling(async (event) => {
   const userId = event.user.userId;
-  const body = JSON.parse(event.body || '{}');
+  const body = parseJSON(event.body);
 
-  const validatedData = validateBody(transactionSchemas.createTransaction)(body);
-  const transaction = await transactionService.createTransaction(userId, validatedData);
+  const validated = validateBody(transactionSchemas.createTransaction)(body);
+  const transaction = await transactionService.createTransaction(userId, validated);
 
-  return {
-    statusCode: 201,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-    body: JSON.stringify({
-      message: 'Transaction created successfully',
-      transaction,
-    }),
-  };
+  return response(201, {
+    message: 'Transaction created successfully',
+    transaction,
+  });
 });
 
 /**
- * Get Transactions (GET /transactions)
- * Protected endpoint - requires auth
- * Query params: limit, offset, startDate, endDate
+ * GET /transactions
  */
 const getTransactions = withAuthAndErrorHandling(async (event) => {
   const userId = event.user.userId;
-  const queryParams = event.queryStringParameters || {};
+  const q = event.queryStringParameters || {};
 
   const options = {
-    limit: parseInt(queryParams.limit) || 50,
-    startDate: queryParams.startDate ? parseInt(queryParams.startDate) : undefined,
-    endDate: queryParams.endDate ? parseInt(queryParams.endDate) : undefined,
+    limit: Number(q.limit) || 50,
+    startDate: q.startDate ? Number(q.startDate) : undefined,
+    endDate: q.endDate ? Number(q.endDate) : undefined,
   };
 
   const result = await transactionService.getTransactions(userId, options);
 
-  return {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-    body: JSON.stringify(result),
-  };
+  return response(200, result);
 });
 
 /**
- * Update Transaction (PUT /transactions/{id})
- * Protected endpoint - requires auth
- * Can update category, description, amount
- */
-const updateTransaction = withAuthAndErrorHandling(async (event) => {
-  const userId = event.user.userId;
-  const transactionId = event.pathParameters.id;
-  const body = JSON.parse(event.body || '{}');
-
-  const validatedData = validateBody(transactionSchemas.updateTransaction)(body);
-  const updatedTransaction = await transactionService.updateTransaction(
-    userId,
-    transactionId,
-    validatedData
-  );
-
-  return {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-    body: JSON.stringify({
-      message: 'Transaction updated successfully',
-      transaction: updatedTransaction,
-    }),
-  };
-});
-
-/**
- * Get Transaction by ID (GET /transactions/{id})
-<<<<<<< HEAD
- * Protected endpoint - requires auth
-=======
->>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
+ * GET /transactions/{id}
  */
 const getTransactionById = withAuthAndErrorHandling(async (event) => {
   const userId = event.user.userId;
-  const transactionId = event.pathParameters.id;
+  const id = event.pathParameters?.id;
 
-  const transaction = await transactionService.getTransactionById(userId, transactionId);
-
-<<<<<<< HEAD
-=======
-  if (!transaction) {
-    return {
-      statusCode: 404,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({ error: 'Transaction not found' }),
-    };
+  if (!id) {
+    return response(400, { error: 'Transaction ID is required' });
   }
 
->>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
-  return {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-<<<<<<< HEAD
-    body: JSON.stringify(transaction),
-=======
-    body: JSON.stringify({ transaction }),
->>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
-  };
+  const transaction = await transactionService.getTransactionById(userId, id);
+
+  if (!transaction) {
+    return response(404, { error: 'Transaction not found' });
+  }
+
+  return response(200, { transaction });
 });
 
 /**
- * Delete Transaction (DELETE /transactions/{id})
-<<<<<<< HEAD
- * Protected endpoint - requires auth
-=======
->>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
+ * PUT /transactions/{id}
+ */
+const updateTransaction = withAuthAndErrorHandling(async (event) => {
+  const userId = event.user.userId;
+  const id = event.pathParameters?.id;
+  const body = parseJSON(event.body);
+
+  if (!id) {
+    return response(400, { error: 'Transaction ID is required' });
+  }
+
+  const validated = validateBody(transactionSchemas.updateTransaction)(body);
+
+  const updated = await transactionService.updateTransaction(userId, id, validated);
+
+  return response(200, {
+    message: 'Transaction updated successfully',
+    transaction: updated,
+  });
+});
+
+/**
+ * DELETE /transactions/{id}
  */
 const deleteTransaction = withAuthAndErrorHandling(async (event) => {
   const userId = event.user.userId;
-  const transactionId = event.pathParameters.id;
+  const id = event.pathParameters?.id;
 
-  await transactionService.deleteTransaction(userId, transactionId);
+  if (!id) {
+    return response(400, { error: 'Transaction ID is required' });
+  }
 
-  return {
-<<<<<<< HEAD
-    statusCode: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-    },
-=======
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-    body: JSON.stringify({ message: 'Transaction deleted', transactionId }),
->>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
-  };
+  await transactionService.deleteTransaction(userId, id);
+
+  return response(200, {
+    message: 'Transaction deleted',
+    transactionId: id,
+  });
 });
 
 /**
-<<<<<<< HEAD
- * Parse SMS to Transaction (POST /transactions/parse-sms)
- * Protected endpoint - admin only
+ * POST /transactions/parse-sms
+ * Admin only
  */
 const parseSms = withAuthAndErrorHandling(async (event) => {
-  // Check if user is admin
-  if (!event.user.claims?.['cognito:groups']?.includes('admin')) {
-    return {
-      statusCode: 403,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({
-        error: 'Forbidden - Admin access required',
-      }),
-    };
+  const isAdmin = event.user?.claims?.['cognito:groups']?.includes('admin');
+
+  if (!isAdmin) {
+    return response(403, { error: 'Forbidden - Admin access required' });
   }
 
-  const body = JSON.parse(event.body || '{}');
-  const { messages } = body;
+  const body = parseJSON(event.body);
+  const messages = body.messages;
 
   if (!Array.isArray(messages)) {
-    return {
-      statusCode: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({
-        error: 'messages must be an array',
-      }),
-    };
+    return response(400, { error: 'messages must be an array' });
   }
 
-  const results = [];
-  for (const msg of messages) {
-    try {
-      const transaction = await transactionService.parseAndCreateFromSms(msg);
-      results.push({ success: true, transaction });
-    } catch (error) {
-      results.push({ success: false, error: error.message });
-    }
-=======
- * Parse SMS (POST /transactions/parse-sms)
- * Admin/internal endpoint for testing SMS parser
- */
-const parseSms = withAuthAndErrorHandling(async (event) => {
-  const body = JSON.parse(event.body || '{}');
-  const messages = body.messages || [];
-  const results = [];
+  const results = await Promise.all(
+    messages.map(async (msg) => {
+      try {
+        const transaction = await transactionService.parseAndCreateFromSms(msg);
+        return { success: true, transaction };
+      } catch (err) {
+        return { success: false, error: err.message };
+      }
+    })
+  );
 
-  for (const msg of messages) {
-    const parsed = await transactionService.parseAndCreateFromSms(msg);
-    results.push(parsed);
->>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
-  }
-
-  return {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-<<<<<<< HEAD
-    body: JSON.stringify({
-      results,
-    }),
-=======
-    body: JSON.stringify({ parsed: results }),
->>>>>>> bd61599590a6094a5f329652eee55aa1511e1c6f
-  };
+  return response(200, { results });
 });
 
 module.exports = {
   createTransaction,
   getTransactions,
-  updateTransaction,
   getTransactionById,
+  updateTransaction,
   deleteTransaction,
   parseSms,
 };
