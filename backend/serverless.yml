@@ -22,6 +22,9 @@ provider:
     MPESA_CONSUMER_KEY: ${env:MPESA_CONSUMER_KEY, ''}
     MPESA_CONSUMER_SECRET: ${env:MPESA_CONSUMER_SECRET, ''}
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
+    OPENAI_MODEL: ${env:OPENAI_MODEL, ''}
+    # NEVER set this to 'true' in a deployed stage - see middleware/auth.js
+    DEV_AUTH_BYPASS: ${env:DEV_AUTH_BYPASS, ''}
     NODE_ENV: production
     # SNS Topics (replace with actual ARNs after deploying infrastructure)
     SNS_NOTIFICATIONS_TOPIC: ${env:SNS_NOTIFICATIONS_TOPIC,

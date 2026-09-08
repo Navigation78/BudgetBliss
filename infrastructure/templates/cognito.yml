@@ -1,17 +1,29 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Cognito user authentication setup for Budget Bliss"
+Description: >
+  Cognito user pool for BudgetBliss. This is the one piece of infrastructure
+  serverless.yml doesn't provision itself - it only reads COGNITO_USER_POOL_ID/
+  COGNITO_CLIENT_ID from the environment (see backend/serverless.yml). Everything
+  else (DynamoDB, Lambda, API Gateway, SNS, EventBridge, CloudWatch, S3) is
+  managed by the Serverless Framework - see infrastructure/README.md.
 
 Parameters:
   Environment:
     Type: String
     Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
 
 Resources:
   BudgetBlissUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub "BudgetBlissUserPool-${Environment}"
-      AutoVerifiedAttributes: [email, phone_number]
+      # Only email is auto-verified. Auto-verifying phone_number requires an SNS
+      # role (SmsConfiguration.SnsCallerArn) that isn't set up here - add one if
+      # SMS verification is needed later.
+      AutoVerifiedAttributes: [email]
       UsernameAttributes: [email]
       Policies:
         PasswordPolicy:
@@ -40,6 +52,12 @@ Resources:
         - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
 
+  # Grants temporary AWS credentials to signed-in users for direct AWS SDK calls
+  # (e.g. S3 uploads). The frontend currently only calls BudgetBliss's own REST
+  # API (see frontend/src/utils/apiClient.js), not AWS services directly, so this
+  # isn't used yet and has no IAM roles attached - add an
+  # AWS::Cognito::IdentityPoolRoleAttachment if that changes. Safe to remove if
+  # you don't anticipate needing it.
   BudgetBlissIdentityPool:
     Type: AWS::Cognito::IdentityPool
     Properties:

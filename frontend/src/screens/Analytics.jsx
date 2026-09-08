@@ -4,6 +4,7 @@ import { TrendingDown, AlertTriangle, Target, Award, Calendar } from 'lucide-rea
 import { apiGet } from '../utils/apiClient';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import formatCurrency from '../utils/formatCurrency';
+import { colors } from '../theme';
 
 // The backend has no /analytics?range= endpoint - only an aggregate-totals
 // /analytics/dashboard and plain /transactions + /categories lists. Everything
@@ -135,18 +136,18 @@ const Analytics = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#04080F] mb-2">Analytics Dashboard</h1>
-          <p className="text-[#3E68A3]">Insights from your spending patterns</p>
+          <h1 className="text-3xl font-bold text-ink mb-2">Analytics Dashboard</h1>
+          <p className="text-primary">Insights from your spending patterns</p>
         </div>
 
         {/* Time Range Selector */}
         <div className="flex items-center gap-3 mb-6">
-          <Calendar className="h-5 w-5 text-[#3E68A3]" />
+          <Calendar className="h-5 w-5 text-primary" />
           <div className="flex gap-2">
             <button
               onClick={() => setTimeRange('7days')}
               className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                timeRange === '7days' ? 'bg-[#3E68A3] text-white' : 'bg-[#E0E9F6] text-[#3E68A3] hover:bg-[#A1C6EA]'
+                timeRange === '7days' ? 'bg-primary text-white' : 'bg-pale text-primary hover:bg-accent'
               }`}
             >
               Last 7 Days
@@ -154,7 +155,7 @@ const Analytics = () => {
             <button
               onClick={() => setTimeRange('30days')}
               className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                timeRange === '30days' ? 'bg-[#3E68A3] text-white' : 'bg-[#E0E9F6] text-[#3E68A3] hover:bg-[#A1C6EA]'
+                timeRange === '30days' ? 'bg-primary text-white' : 'bg-pale text-primary hover:bg-accent'
               }`}
             >
               Last 30 Days
@@ -174,45 +175,45 @@ const Analytics = () => {
               <p className="text-red-600 font-semibold">Unable to load analytics</p>
               <p className="text-sm text-gray-700">{error.message}</p>
               <div className="mt-3">
-                <button onClick={() => load()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+                <button onClick={() => load()} className="px-3 py-2 bg-primary text-white rounded-lg">Retry</button>
               </div>
             </div>
           )}
 
           {/* Total Spending */}
-          <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-lg transition-shadow">
+          <div className="bg-white border-2 border-pale rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-3">
               <div className="bg-red-100 p-3 rounded-full">
                 <TrendingDown className="h-6 w-6 text-red-600" />
               </div>
             </div>
             <h3 className="text-gray-600 text-sm mb-1">Total Spending</h3>
-            <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(insights.totalSpending)}</p>
+            <p className="text-2xl font-bold text-ink">{formatCurrency(insights.totalSpending)}</p>
             <p className="text-xs text-gray-500 mt-1">Last {timeRange === '7days' ? '7 days' : '30 days'}</p>
           </div>
 
           {/* Biggest Category */}
-          <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-lg transition-shadow">
+          <div className="bg-white border-2 border-pale rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-3">
               <div className="bg-purple-100 p-3 rounded-full">
                 <Award className="h-6 w-6 text-purple-600" />
               </div>
             </div>
             <h3 className="text-gray-600 text-sm mb-1">Top Category</h3>
-            <p className="text-2xl font-bold text-[#04080F]">{insights.biggestCategory.name}</p>
+            <p className="text-2xl font-bold text-ink">{insights.biggestCategory.name}</p>
             <p className="text-xs text-gray-500 mt-1">{insights.biggestCategory.percentage}% of spending</p>
           </div>
 
           {/* Savings Progress */}
-          <div className="bg-[#A1C6EA] rounded-lg p-6 hover:shadow-lg transition-shadow">
+          <div className="bg-accent rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-3">
               <div className="bg-white p-3 rounded-full">
-                <Target className="h-6 w-6 text-[#3E68A3]" />
+                <Target className="h-6 w-6 text-primary" />
               </div>
             </div>
-            <h3 className="text-[#04080F] text-sm mb-1">Savings Goal</h3>
+            <h3 className="text-ink text-sm mb-1">Savings Goal</h3>
             <p className="text-2xl font-bold text-white">{insights.savingsGoal.percentage}%</p>
-            <p className="text-xs text-[#04080F] mt-1">
+            <p className="text-xs text-ink mt-1">
               {formatCurrency(insights.savingsGoal.current)} / {formatCurrency(insights.savingsGoal.target)}
             </p>
           </div>
@@ -221,8 +222,8 @@ const Analytics = () => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Spending by Category - Pie Chart */}
-          <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6">
-            <h2 className="text-xl font-bold text-[#04080F] mb-4">Spending by Category</h2>
+          <div className="bg-white border-2 border-pale rounded-lg p-6">
+            <h2 className="text-xl font-bold text-ink mb-4">Spending by Category</h2>
             <div className="h-80 flex items-center justify-center">
               {loading ? (
                 <LoadingSkeleton text="Loading chart..." />
@@ -246,7 +247,7 @@ const Analytics = () => {
                     </Pie>
                     <Tooltip
                       formatter={(value) => formatCurrency(value)}
-                      contentStyle={{ backgroundColor: '#04080F', border: 'none', borderRadius: '8px', color: 'white' }}
+                      contentStyle={{ backgroundColor: colors.ink, border: 'none', borderRadius: '8px', color: 'white' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -258,29 +259,29 @@ const Analytics = () => {
                 <div key={item.name} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
                   <span className="text-sm text-gray-600">{item.name}</span>
-                  <span className="text-sm font-semibold text-[#04080F] ml-auto">{formatCurrency(item.value)}</span>
+                  <span className="text-sm font-semibold text-ink ml-auto">{formatCurrency(item.value)}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Daily Spending Trend - Line Chart */}
-          <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6">
-            <h2 className="text-xl font-bold text-[#04080F] mb-4">Daily Spending Trend</h2>
+          <div className="bg-white border-2 border-pale rounded-lg p-6">
+            <h2 className="text-xl font-bold text-ink mb-4">Daily Spending Trend</h2>
             <div className="h-80">
               {loading ? (
                 <LoadingSkeleton text="Loading chart..." />
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E0E9F6" />
-                    <XAxis dataKey="day" stroke="#3E68A3" style={{ fontSize: '12px' }} />
-                    <YAxis stroke="#3E68A3" style={{ fontSize: '12px' }} tickFormatter={(value) => `${value / 1000}K`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={colors.pale} />
+                    <XAxis dataKey="day" stroke={colors.primary} style={{ fontSize: '12px' }} />
+                    <YAxis stroke={colors.primary} style={{ fontSize: '12px' }} tickFormatter={(value) => `${value / 1000}K`} />
                     <Tooltip
                       formatter={(value) => formatCurrency(value)}
-                      contentStyle={{ backgroundColor: '#04080F', border: 'none', borderRadius: '8px', color: 'white' }}
+                      contentStyle={{ backgroundColor: colors.ink, border: 'none', borderRadius: '8px', color: 'white' }}
                     />
-                    <Line type="monotone" dataKey="amount" stroke="#3E68A3" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} />
+                    <Line type="monotone" dataKey="amount" stroke={colors.primary} strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 7 }} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -302,7 +303,7 @@ const Analytics = () => {
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-red-700 mb-2">Largest Transaction</h3>
                 <div className="bg-white rounded-lg p-4">
-                  <p className="font-semibold text-[#04080F] mb-1">{insights.largestTransaction.description}</p>
+                  <p className="font-semibold text-ink mb-1">{insights.largestTransaction.description}</p>
                   <p className="text-sm text-gray-600 mb-2">{insights.largestTransaction.category} • {insights.largestTransaction.date}</p>
                   <p className="text-2xl font-bold text-red-600">{formatCurrency(insights.largestTransaction.amount)}</p>
                 </div>
@@ -328,10 +329,10 @@ const Analytics = () => {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">
-                      Saved: <span className="font-semibold text-[#04080F]">{formatCurrency(insights.savingsGoal.current)}</span>
+                      Saved: <span className="font-semibold text-ink">{formatCurrency(insights.savingsGoal.current)}</span>
                     </span>
                     <span className="text-gray-600">
-                      Goal (20% of income): <span className="font-semibold text-[#04080F]">{formatCurrency(insights.savingsGoal.target)}</span>
+                      Goal (20% of income): <span className="font-semibold text-ink">{formatCurrency(insights.savingsGoal.target)}</span>
                     </span>
                   </div>
                   <p className="text-xs text-green-700 mt-3 font-medium">

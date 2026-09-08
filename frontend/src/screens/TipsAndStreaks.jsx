@@ -6,19 +6,19 @@ import LoadingSkeleton from '../components/LoadingSkeleton';
 
 // --- Reusable Components ---
 const StatsCard = ({ Icon, label, value, color }) => (
-  <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-4 text-center">
+  <div className="bg-white border-2 border-pale rounded-lg p-4 text-center">
     <Icon className={`h-6 w-6 ${color} mx-auto mb-2`} />
     <p className="text-sm text-gray-600 mb-1">{label}</p>
-    <p className="text-2xl font-bold text-[#04080F]">{value}</p>
+    <p className="text-2xl font-bold text-ink">{value}</p>
   </div>
 );
 
 const BadgeCard = ({ badge }) => (
   <div className={`rounded-lg p-4 text-center transition-all ${
-    badge.earned ? 'bg-white border-2 border-[#A1C6EA] shadow-md' : 'bg-gray-100 border-2 border-gray-300 opacity-50'
+    badge.earned ? 'bg-white border-2 border-accent shadow-md' : 'bg-gray-100 border-2 border-gray-300 opacity-50'
   }`}>
     <div className="text-4xl mb-2">{badge.earned ? badge.icon : '🔒'}</div>
-    <p className="text-sm font-semibold text-[#04080F]">{badge.name}</p>
+    <p className="text-sm font-semibold text-ink">{badge.name}</p>
     <p className="text-xs text-gray-600">{badge.daysRequired} days</p>
     {badge.earned && <CheckCircle className="h-4 w-4 text-green-500 mx-auto mt-2" />}
   </div>
@@ -28,8 +28,8 @@ const LessonCard = ({ lesson, onToggleExpand, onMarkAsRead, formatDate }) => {
   const isTodayNew = lesson.isToday && !lesson.isRead;
   return (
     <div className={`rounded-lg border-2 overflow-hidden transition-all ${
-      isTodayNew ? 'border-[#3E68A3] bg-[#E0E9F6] shadow-lg' :
-      lesson.isFuture ? 'border-gray-300 bg-gray-50 opacity-60' : 'border-[#E0E9F6] bg-white hover:shadow-md'
+      isTodayNew ? 'border-primary bg-pale shadow-lg' :
+      lesson.isFuture ? 'border-gray-300 bg-gray-50 opacity-60' : 'border-pale bg-white hover:shadow-md'
     }`}>
       <div className="p-5">
         {/* Header */}
@@ -41,7 +41,7 @@ const LessonCard = ({ lesson, onToggleExpand, onMarkAsRead, formatDate }) => {
               {isTodayNew && <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">NEW</span>}
               <span className="text-xs text-gray-600 font-medium">{formatDate(lesson.date)}</span>
             </div>
-            <h4 className="text-lg font-bold text-[#04080F]">{lesson.title}</h4>
+            <h4 className="text-lg font-bold text-ink">{lesson.title}</h4>
           </div>
         </div>
 
@@ -61,7 +61,7 @@ const LessonCard = ({ lesson, onToggleExpand, onMarkAsRead, formatDate }) => {
             <div className="flex gap-2 mt-4">
               <button
                 onClick={() => onToggleExpand(lesson.id)}
-                className="flex items-center gap-1 px-3 py-2 bg-white border-2 border-[#A1C6EA] text-[#3E68A3] rounded-lg hover:bg-[#E0E9F6] transition-colors text-sm font-semibold"
+                className="flex items-center gap-1 px-3 py-2 bg-white border-2 border-accent text-primary rounded-lg hover:bg-pale transition-colors text-sm font-semibold"
               >
                 {lesson.isExpanded ? <><ChevronUp className="h-4 w-4" /> Show Less</> : <><ChevronDown className="h-4 w-4" /> Read Full Lesson</>}
               </button>
@@ -69,7 +69,7 @@ const LessonCard = ({ lesson, onToggleExpand, onMarkAsRead, formatDate }) => {
               {isTodayNew && (
                 <button
                   onClick={() => onMarkAsRead(lesson.id)}
-                  className="flex items-center gap-1 px-4 py-2 bg-[#3E68A3] text-white rounded-lg hover:bg-[#04080F] transition-colors text-sm font-semibold"
+                  className="flex items-center gap-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-ink transition-colors text-sm font-semibold"
                 >
                   <CheckCircle className="h-4 w-4" /> Mark as Read
                 </button>
@@ -178,8 +178,8 @@ const TipsAndStreaks = () => {
         {/* Header & Streak */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-[#04080F] mb-2">Daily Financial Tips</h1>
-            <p className="text-[#3E68A3]">Build your financial knowledge one day at a time</p>
+            <h1 className="text-3xl font-bold text-ink mb-2">Daily Financial Tips</h1>
+            <p className="text-primary">Build your financial knowledge one day at a time</p>
           </div>
           <div className="bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-200 rounded-lg p-6 shadow-lg lg:min-w-[300px]">
             <div className="flex items-center gap-3 mb-3">
@@ -187,14 +187,14 @@ const TipsAndStreaks = () => {
                 <Flame className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-[#04080F]">{currentStreak} Days 🔥</h2>
+                <h2 className="text-2xl font-bold text-ink">{currentStreak} Days 🔥</h2>
                 <p className="text-xs text-gray-600">Current Streak</p>
               </div>
             </div>
             <div className="bg-white rounded-lg p-3">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-semibold text-gray-700">Next Badge</span>
-                <span className="text-xs text-[#3E68A3] font-bold">{currentStreak}/21</span>
+                <span className="text-xs text-primary font-bold">{currentStreak}/21</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div className="bg-gradient-to-r from-orange-400 to-orange-600 h-2 rounded-full transition-all duration-500"
@@ -210,21 +210,21 @@ const TipsAndStreaks = () => {
             <p className="text-red-600 font-semibold">Unable to load today's tip</p>
             <p className="text-sm text-gray-700">{error.message}</p>
             <div className="mt-3">
-              <button onClick={() => load()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+              <button onClick={() => load()} className="px-3 py-2 bg-primary text-white rounded-lg">Retry</button>
             </div>
           </div>
         )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <StatsCard Icon={Calendar} label="Current Streak" value={currentStreak} color="text-[#3E68A3]" />
+          <StatsCard Icon={Calendar} label="Current Streak" value={currentStreak} color="text-primary" />
           <StatsCard Icon={Trophy} label="Badges Earned" value={badges.filter(b => b.earned).length} color="text-yellow-500" />
-          <StatsCard Icon={Star} label="Lessons Completed" value={totalLessonsCompleted} color="text-[#A1C6EA]" />
+          <StatsCard Icon={Star} label="Lessons Completed" value={totalLessonsCompleted} color="text-accent" />
         </div>
 
         {/* Badges */}
-        <div className="bg-[#E0E9F6] rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-bold text-[#04080F] mb-4 flex items-center gap-2">
+        <div className="bg-pale rounded-lg p-6 mb-8">
+          <h3 className="text-lg font-bold text-ink mb-4 flex items-center gap-2">
             <Award className="h-5 w-5" /> Your Badges
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -234,7 +234,7 @@ const TipsAndStreaks = () => {
 
         {/* Lessons */}
         <div>
-          <h3 className="text-xl font-bold text-[#04080F] mb-4">Financial Lessons</h3>
+          <h3 className="text-xl font-bold text-ink mb-4">Financial Lessons</h3>
           <div className="space-y-4">
             {lessons.map(lesson =>
               <LessonCard
@@ -249,7 +249,7 @@ const TipsAndStreaks = () => {
         </div>
 
         {/* Motivational Footer */}
-        <div className="mt-8 bg-gradient-to-r from-[#A1C6EA] to-[#3E68A3] rounded-lg p-6 text-center text-white">
+        <div className="mt-8 bg-gradient-to-r from-accent to-primary rounded-lg p-6 text-center text-white">
           <p className="text-lg font-semibold mb-2">"Financial freedom is available to those who learn about it and work for it."</p>
           <p className="text-sm opacity-90">— Robert Kiyosaki</p>
         </div>
