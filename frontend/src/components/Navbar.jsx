@@ -1,57 +1,67 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { FaHome, FaChartPie, FaPlusCircle, FaLightbulb, FaUser } from "react-icons/fa";
-import { Wallet } from "lucide-react";
+import { Wallet, Menu, X } from "lucide-react";
+
+const NAV_LINKS = [
+  { to: "/home", label: "Home", Icon: FaHome },
+  { to: "/create-budget", label: "Create Budget", Icon: FaPlusCircle },
+  { to: "/analytics", label: "Analytics", Icon: FaChartPie },
+  { to: "/tips", label: "Tips & Streak", Icon: FaLightbulb },
+  { to: "/profile", label: "Profile", Icon: FaUser },
+];
 
 function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const linkClasses = ({ isActive }) =>
     `flex items-center gap-2 px-3 py-2 rounded-md transition-colors duration-200 ${
-      isActive ? "bg-[#3E68A3] text-white" : "text-white hover:text-[#A1C6EA]"
+      isActive ? "bg-primary text-white" : "text-white hover:text-accent"
     }`;
 
   return (
-    <nav className="fixed w-full bg-[#04080F] shadow-md px-6 py-3 flex justify-between items-center top-0 z-50">
-      <div className="text-white text-xl font-bold flex items-center gap-2">
-        <Wallet className="h-6 w-6 text-[#A1C6EA]" />
-        BudgetBliss
+    <nav className="fixed w-full bg-ink shadow-md px-6 py-3 top-0 z-50">
+      <div className="flex justify-between items-center">
+        <div className="text-white text-xl font-bold flex items-center gap-2">
+          <Wallet className="h-6 w-6 text-accent" />
+          BudgetBliss
+        </div>
+
+        <ul className="hidden md:flex space-x-4">
+          {NAV_LINKS.map(({ to, label, Icon }) => (
+            <li key={to}>
+              <NavLink to={to} className={linkClasses}>
+                <Icon /> {label}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+
+        {/* Mobile menu button */}
+        <div className="md:hidden">
+          <button
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            className="text-white"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMenuOpen}
+          >
+            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
-      <ul className="hidden md:flex space-x-4">
-        <li>
-          <NavLink to="/home" className={linkClasses}>
-            <FaHome /> Home
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/create-budget" className={linkClasses}>
-            <FaPlusCircle /> Create Budget
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/analytics" className={linkClasses}>
-            <FaChartPie /> Analytics
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/tips" className={linkClasses}>
-            <FaLightbulb /> Tips & Streak
-          </NavLink>
-        </li>
-        <li>
-          <NavLink to="/profile" className={linkClasses}>
-            <FaUser /> Profile
-          </NavLink>
-        </li>
-      </ul>
-
-      {/* Mobile menu button - you can add mobile menu later */}
-      <div className="md:hidden">
-        <button className="text-white">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
+      {/* Mobile menu panel */}
+      {isMenuOpen && (
+        <ul className="md:hidden flex flex-col gap-1 mt-3 pb-2">
+          {NAV_LINKS.map(({ to, label, Icon }) => (
+            <li key={to}>
+              <NavLink to={to} className={linkClasses} onClick={() => setIsMenuOpen(false)}>
+                <Icon /> {label}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      )}
     </nav>
   );
 }

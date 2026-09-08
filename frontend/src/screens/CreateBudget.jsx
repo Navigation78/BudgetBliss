@@ -4,6 +4,7 @@ import { apiGet, apiPost } from '../utils/apiClient';
 import { getCurrentUser } from '../utils/auth';
 import formatCurrency from '../utils/formatCurrency';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import { colors } from '../theme';
 
 // Budgets are per real category (backend/middleware/validators.js requires a
 // categoryId uuid), so the category list comes from GET /categories - the
@@ -97,8 +98,8 @@ const CreateBudget = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#04080F] mb-2">Create Your Budget</h1>
-          <p className="text-[#3E68A3]">Allocate your income across different categories</p>
+          <h1 className="text-3xl font-bold text-ink mb-2">Create Your Budget</h1>
+          <p className="text-primary">Allocate your income across different categories</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -115,7 +116,7 @@ const CreateBudget = () => {
                   <p className="text-red-600 font-semibold">Unable to load your categories</p>
                   <p className="text-sm text-gray-700">{error.message}</p>
                   <div className="mt-3">
-                    <button onClick={() => load()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+                    <button onClick={() => load()} className="px-3 py-2 bg-primary text-white rounded-lg">Retry</button>
                   </div>
                 </div>
               )}
@@ -155,7 +156,7 @@ const CreateBudget = () => {
                 {categories.map((category) => {
                   const percentage = budgetPercentages[category.categoryId] ?? 0;
                   return (
-                    <div key={category.categoryId} className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 hover:shadow-md transition-shadow">
+                    <div key={category.categoryId} className="bg-white border-2 border-pale rounded-lg p-6 hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div
@@ -165,7 +166,7 @@ const CreateBudget = () => {
                             {category.icon || '📌'}
                           </div>
                           <div>
-                            <h3 className="font-semibold text-[#04080F] text-lg">{category.name}</h3>
+                            <h3 className="font-semibold text-ink text-lg">{category.name}</h3>
                             <p className="text-sm text-gray-500">
                               {formatCurrency(calculateAmount(percentage))}
                             </p>
@@ -180,9 +181,9 @@ const CreateBudget = () => {
                             max="100"
                             value={percentage}
                             onChange={(e) => handlePercentageChange(category.categoryId, e.target.value)}
-                            className="w-16 px-2 py-1 text-center border-2 border-[#A1C6EA] rounded-md font-semibold text-[#04080F] focus:outline-none focus:ring-2 focus:ring-[#3E68A3]"
+                            className="w-16 px-2 py-1 text-center border-2 border-accent rounded-md font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-primary"
                           />
-                          <span className="text-[#3E68A3] font-semibold">%</span>
+                          <span className="text-primary font-semibold">%</span>
                         </div>
                       </div>
 
@@ -193,9 +194,9 @@ const CreateBudget = () => {
                         max="100"
                         value={percentage}
                         onChange={(e) => handlePercentageChange(category.categoryId, e.target.value)}
-                        className="w-full h-2 bg-[#E0E9F6] rounded-lg appearance-none cursor-pointer slider"
+                        className="w-full h-2 bg-pale rounded-lg appearance-none cursor-pointer slider"
                         style={{
-                          background: `linear-gradient(to right, #3E68A3 0%, #3E68A3 ${percentage}%, #E0E9F6 ${percentage}%, #E0E9F6 100%)`
+                          background: `linear-gradient(to right, ${colors.primary} 0%, ${colors.primary} ${percentage}%, ${colors.pale} ${percentage}%, ${colors.pale} 100%)`
                         }}
                       />
                     </div>
@@ -207,7 +208,7 @@ const CreateBudget = () => {
                   onClick={handleSaveBudget}
                   disabled={!isValid || saving}
                   className={`w-full py-4 rounded-lg font-semibold text-white flex items-center justify-center gap-2 transition-colors ${
-                    isValid && !saving ? 'bg-[#3E68A3] hover:bg-[#04080F] cursor-pointer' : 'bg-gray-300 cursor-not-allowed'
+                    isValid && !saving ? 'bg-primary hover:bg-ink cursor-pointer' : 'bg-gray-300 cursor-not-allowed'
                   }`}
                 >
                   <Save className="h-5 w-5" />
@@ -219,13 +220,13 @@ const CreateBudget = () => {
 
           {/* Preview Card */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 bg-[#A1C6EA] rounded-lg p-6 shadow-lg">
-              <h2 className="text-xl font-bold text-[#04080F] mb-4">Budget Preview</h2>
+            <div className="sticky top-24 bg-accent rounded-lg p-6 shadow-lg">
+              <h2 className="text-xl font-bold text-ink mb-4">Budget Preview</h2>
 
               {/* Current Balance */}
               <div className="bg-white rounded-lg p-4 mb-4">
                 <p className="text-sm text-gray-600 mb-1">Current Balance</p>
-                <p className="text-2xl font-bold text-[#04080F]">{formatCurrency(currentBalance)}</p>
+                <p className="text-2xl font-bold text-ink">{formatCurrency(currentBalance)}</p>
               </div>
 
               {/* Category Breakdown */}
@@ -236,17 +237,17 @@ const CreateBudget = () => {
                   return (
                     <div key={category.categoryId} className="bg-white bg-opacity-50 rounded-lg p-3">
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-medium text-[#04080F]">{category.name}</span>
-                        <span className="text-xs font-semibold text-[#3E68A3]">{percentage}%</span>
+                        <span className="text-sm font-medium text-ink">{category.name}</span>
+                        <span className="text-xs font-semibold text-primary">{percentage}%</span>
                       </div>
-                      <p className="text-lg font-bold text-[#04080F]">{formatCurrency(amount)}</p>
+                      <p className="text-lg font-bold text-ink">{formatCurrency(amount)}</p>
                     </div>
                   );
                 })}
               </div>
 
               {/* Summary */}
-              <div className="bg-[#04080F] rounded-lg p-4 text-white">
+              <div className="bg-ink rounded-lg p-4 text-white">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm">Total Allocated</span>
                   <span className="text-sm font-semibold">{totalPercentage}%</span>

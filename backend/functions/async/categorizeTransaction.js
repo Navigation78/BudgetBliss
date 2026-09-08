@@ -8,8 +8,10 @@ const transactionService = require('../../services/transactionService');
 const categoryService = require('../../services/categoryService');
 const db = require('../../services/dynamodbService');
 const { publishTransactionError } = require('../../services/notificationService');
+const openaiClient = require('../../utils/openaiClient');
 
-// Mock categorization logic - replace with actual AI/ML implementation
+// Fast, free, deterministic first pass. OpenAI (if OPENAI_API_KEY is set) is only
+// used as a fallback for descriptions these don't match - see predictCategory.
 const categorizationRules = {
   'food|restaurant|cafe|glovo': 'Food & Dining',
   'uber|taxi|transport': 'Transportation',
@@ -27,13 +29,12 @@ const categorizationRules = {
 const predictCategory = async (description, userId) => {
   try {
     const lowerDesc = description.toLowerCase();
+    const categories = await categoryService.getCategories(userId);
 
     // Rule-based categorization
     for (const [keywords, categoryName] of Object.entries(categorizationRules)) {
       const regex = new RegExp(keywords, 'i');
       if (regex.test(lowerDesc)) {
-        // Find category by name
-        const categories = await categoryService.getCategories(userId);
         const category = categories.find(c => c.name === categoryName);
         if (category) {
           return category.categoryId;
@@ -41,8 +42,21 @@ const predictCategory = async (description, userId) => {
       }
     }
 
+    // No keyword match - ask OpenAI to pick from the user's actual categories
+    // (if configured). Never let an API failure block categorization.
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const suggestedName = await openaiClient.suggestCategory(description, categories.map(c => c.name));
+        const suggested = categories.find(c => c.name === suggestedName);
+        if (suggested) {
+          return suggested.categoryId;
+        }
+      } catch (e) {
+        console.error('OpenAI categorization failed, falling back to Other:', e.message);
+      }
+    }
+
     // Default to 'Other' if no match
-    const categories = await categoryService.getCategories(userId);
     const otherCategory = categories.find(c => c.name === 'Other');
     return otherCategory?.categoryId || 'UNCATEGORIZED';
   } catch (error) {

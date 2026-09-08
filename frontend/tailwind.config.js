@@ -4,10 +4,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'soft-blue': '#c4d5ecff',
-        'sky-blue': '#da91ddff',
-        'royal-blue': '#1d0f6aff',
-        'midnight-blue': '#8a7ee4ff',
+        // The palette actually used across the app (Home/Analytics/CreateBudget/
+        // Profile/TipsAndStreaks/Navbar) - previously repeated as raw hex in every
+        // screen instead of living here.
+        ink: '#04080F',
+        primary: '#3E68A3',
+        accent: '#A1C6EA',
+        pale: '#E0E9F6',
       },
       fontFamily: {
         nunito: ["'Nunito Sans'", "sans-serif"],

@@ -161,8 +161,8 @@ const Profile = () => {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#04080F] mb-2">Profile & Settings</h1>
-          <p className="text-[#3E68A3]">Manage your account and preferences</p>
+          <h1 className="text-3xl font-bold text-ink mb-2">Profile & Settings</h1>
+          <p className="text-primary">Manage your account and preferences</p>
         </div>
 
         {loading && <LoadingSkeleton text="Loading your profile..." />}
@@ -171,7 +171,7 @@ const Profile = () => {
             <p className="text-red-600 font-semibold">Unable to load your profile</p>
             <p className="text-sm text-gray-700">{error.message}</p>
             <div className="mt-3">
-              <button onClick={() => load()} className="px-3 py-2 bg-[#3E68A3] text-white rounded-lg">Retry</button>
+              <button onClick={() => load()} className="px-3 py-2 bg-primary text-white rounded-lg">Retry</button>
             </div>
           </div>
         )}
@@ -179,18 +179,18 @@ const Profile = () => {
         {!loading && !error && (
         <>
         {/* Profile Picture */}
-        <div className="bg-gradient-to-br from-[#E0E9F6] to-[#A1C6EA] rounded-lg p-8 mb-6 text-center">
+        <div className="bg-gradient-to-br from-pale to-accent rounded-lg p-8 mb-6 text-center">
           <div className="relative inline-block">
             <div className="w-32 h-32 rounded-full bg-white border-4 border-white shadow-lg overflow-hidden mx-auto">
               {userData.profilePicture ? (
                 <img src={userData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-[#3E68A3]">
+                <div className="w-full h-full flex items-center justify-center bg-primary">
                   <User className="h-16 w-16 text-white" />
                 </div>
               )}
             </div>
-            <label className="absolute bottom-0 right-0 bg-[#3E68A3] hover:bg-[#04080F] text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg">
+            <label className="absolute bottom-0 right-0 bg-primary hover:bg-ink text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg">
               <Camera className="h-5 w-5" />
               <input
                 type="file"
@@ -200,18 +200,18 @@ const Profile = () => {
               />
             </label>
           </div>
-          <h2 className="text-2xl font-bold text-[#04080F] mt-4">{userData.username || 'User'}</h2>
-          <p className="text-[#3E68A3]">{userData.email || 'user@example.com'}</p>
+          <h2 className="text-2xl font-bold text-ink mt-4">{userData.username || 'User'}</h2>
+          <p className="text-primary">{userData.email || 'user@example.com'}</p>
         </div>
 
         {/* M-Pesa */}
-        <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 mb-6">
+        <div className="bg-white border-2 border-pale rounded-lg p-6 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="bg-green-100 p-3 rounded-full">
               <Smartphone className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[#04080F]">M-Pesa Account</h3>
+              <h3 className="text-lg font-bold text-ink">M-Pesa Account</h3>
               <p className="text-sm text-gray-600">Link your M-Pesa for automatic transaction tracking</p>
             </div>
           </div>
@@ -263,9 +263,9 @@ const Profile = () => {
         </div>
 
         {/* Basic Info */}
-        <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-bold text-[#04080F] mb-4 flex items-center gap-2">
-            <User className="h-5 w-5 text-[#3E68A3]" /> Basic Information
+        <div className="bg-white border-2 border-pale rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-bold text-ink mb-4 flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" /> Basic Information
           </h3>
           <div className="space-y-4">
             <div>
@@ -275,12 +275,12 @@ const Profile = () => {
                   type="text"
                   value={userData.username}
                   onChange={(e) => setUserData(prev => ({ ...prev, username: e.target.value }))}
-                  className="flex-1 px-4 py-2 border-2 border-[#E0E9F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E68A3]"
+                  className="flex-1 px-4 py-2 border-2 border-pale rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button
                   onClick={handleSaveUsername}
                   disabled={savingUsername}
-                  className="px-4 py-2 bg-[#3E68A3] text-white rounded-lg hover:bg-[#04080F] transition-colors font-semibold disabled:opacity-50"
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-ink transition-colors font-semibold disabled:opacity-50"
                 >
                   {savingUsername ? 'Saving...' : 'Save'}
                 </button>
@@ -295,7 +295,7 @@ const Profile = () => {
                   value={userData.email}
                   disabled
                   title="Email changes aren't supported yet"
-                  className="flex-1 px-4 py-2 border-2 border-[#E0E9F6] rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                  className="flex-1 px-4 py-2 border-2 border-pale rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
                 />
               </div>
             </div>
@@ -303,7 +303,7 @@ const Profile = () => {
               <label className="text-sm font-semibold text-gray-700 mb-1 block">Password</label>
               <button
                 onClick={() => setShowPasswordModal(true)}
-                className="flex items-center gap-2 px-4 py-2 border-2 border-[#A1C6EA] text-[#3E68A3] rounded-lg hover:bg-[#E0E9F6] transition-colors font-semibold"
+                className="flex items-center gap-2 px-4 py-2 border-2 border-accent text-primary rounded-lg hover:bg-pale transition-colors font-semibold"
               >
                 <Lock className="h-4 w-4" /> Change Password
               </button>
@@ -312,28 +312,28 @@ const Profile = () => {
         </div>
 
         {/* Settings */}
-        <div className="bg-white border-2 border-[#E0E9F6] rounded-lg p-6 mb-6">
+        <div className="bg-white border-2 border-pale rounded-lg p-6 mb-6">
           <button
             onClick={() => setSettingsExpanded(prev => !prev)}
             className="w-full flex items-center justify-between"
           >
             <div className="flex items-center gap-2">
-              <Settings className="h-5 w-5 text-[#3E68A3]" />
-              <h3 className="text-lg font-bold text-[#04080F]">Settings & Preferences</h3>
+              <Settings className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-bold text-ink">Settings & Preferences</h3>
             </div>
-            {settingsExpanded ? <ChevronUp className="h-5 w-5 text-[#3E68A3]" /> : <ChevronDown className="h-5 w-5 text-[#3E68A3]" />}
+            {settingsExpanded ? <ChevronUp className="h-5 w-5 text-primary" /> : <ChevronDown className="h-5 w-5 text-primary" />}
           </button>
 
           {settingsExpanded && (
             <div className="mt-6 space-y-6">
               {/* Notifications */}
               <div>
-                <h4 className="font-semibold text-[#04080F] mb-3 flex items-center gap-2">
+                <h4 className="font-semibold text-ink mb-3 flex items-center gap-2">
                   <Bell className="h-4 w-4" /> Notification Preferences
                 </h4>
                 <div className="space-y-3">
                   {Object.keys(notifications).map(key => (
-                    <div key={key} className="flex items-center justify-between p-3 bg-[#E0E9F6] rounded-lg">
+                    <div key={key} className="flex items-center justify-between p-3 bg-pale rounded-lg">
                       <span className="text-sm text-gray-700 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
                       <button
                         onClick={() => toggleNotification(key)}
@@ -348,7 +348,7 @@ const Profile = () => {
 
               {/* Theme */}
               <div>
-                <h4 className="font-semibold text-[#04080F] mb-3 flex items-center gap-2">
+                <h4 className="font-semibold text-ink mb-3 flex items-center gap-2">
                   {theme === 'light' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />} Theme
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
@@ -357,7 +357,7 @@ const Profile = () => {
                       key={t}
                       onClick={() => setTheme(t)}
                       className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
-                        theme === t ? 'border-[#3E68A3] bg-[#E0E9F6] text-[#3E68A3]' : 'border-[#E0E9F6] hover:bg-[#E0E9F6]'
+                        theme === t ? 'border-primary bg-pale text-primary' : 'border-pale hover:bg-pale'
                       }`}
                     >
                       {t === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -369,14 +369,14 @@ const Profile = () => {
 
               {/* Data & Privacy */}
               <div>
-                <h4 className="font-semibold text-[#04080F] mb-3 flex items-center gap-2">
+                <h4 className="font-semibold text-ink mb-3 flex items-center gap-2">
                   <Shield className="h-4 w-4" /> Data & Privacy
                 </h4>
                 <div className="space-y-2">
-                  <button className="w-full text-left px-4 py-3 bg-[#E0E9F6] rounded-lg hover:bg-[#A1C6EA] transition-colors text-sm text-gray-700">
+                  <button className="w-full text-left px-4 py-3 bg-pale rounded-lg hover:bg-accent transition-colors text-sm text-gray-700">
                     Download Your Data
                   </button>
-                  <button className="w-full text-left px-4 py-3 bg-[#E0E9F6] rounded-lg hover:bg-[#A1C6EA] transition-colors text-sm text-gray-700">
+                  <button className="w-full text-left px-4 py-3 bg-pale rounded-lg hover:bg-accent transition-colors text-sm text-gray-700">
                     Clear Transaction History
                   </button>
                   <button className="w-full text-left px-4 py-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors text-sm text-red-600 font-semibold">
@@ -398,18 +398,18 @@ const Profile = () => {
 
         {/* Password Modal */}
         <Modal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)}>
-          <h3 className="text-xl font-bold text-[#04080F] mb-4">Change Password</h3>
+          <h3 className="text-xl font-bold text-ink mb-4">Change Password</h3>
           <div className="space-y-4">
             {['Current Password','New Password','Confirm New Password'].map(label => (
               <div key={label}>
                 <label className="text-sm font-semibold text-gray-700 mb-1 block">{label}</label>
-                <input type="password" className="w-full px-4 py-2 border-2 border-[#E0E9F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E68A3]" />
+                <input type="password" className="w-full px-4 py-2 border-2 border-pale rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
             ))}
           </div>
           <button
             onClick={handlePasswordChange}
-            className="flex-1 mt-4 px-4 py-2 bg-[#3E68A3] text-white rounded-lg hover:bg-[#04080F] transition-colors font-semibold"
+            className="flex-1 mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-ink transition-colors font-semibold"
           >
             Change Password
           </button>
@@ -417,7 +417,7 @@ const Profile = () => {
 
         {/* M-Pesa Modal */}
         <Modal isOpen={showMpesaModal} onClose={() => setShowMpesaModal(false)}>
-          <h3 className="text-xl font-bold text-[#04080F] mb-4">Link M-Pesa Account</h3>
+          <h3 className="text-xl font-bold text-ink mb-4">Link M-Pesa Account</h3>
           <div className="space-y-4">
             <div>
               <label className="text-sm font-semibold text-gray-700 mb-1 block">M-Pesa Phone Number</label>
@@ -426,7 +426,7 @@ const Profile = () => {
                 placeholder="0712345678"
                 value={mpesaInput}
                 onChange={(e) => setMpesaInput(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-[#E0E9F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3E68A3]"
+                className="w-full px-4 py-2 border-2 border-pale rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3">

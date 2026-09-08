@@ -86,7 +86,10 @@ const formatTipMessage = (tip) => {
 const sendTipToUser = async (user, tip) => {
   try {
     const params = {
-      TopicArn: process.env.SNS_TOPIC_ARN || 'arn:aws:sns:us-east-1:123456789:budgetbliss-tips',
+      // SNS_DAILY_TIPS_TOPIC is what serverless.yml actually injects (see
+      // provider.environment) - this used to read a SNS_TOPIC_ARN var that
+      // nothing ever set, silently falling back to a fake hardcoded ARN.
+      TopicArn: process.env.SNS_DAILY_TIPS_TOPIC,
       Subject: `Daily Financial Tip: ${tip.title}`,
       Message: formatTipMessage(tip),
       MessageAttributes: {
