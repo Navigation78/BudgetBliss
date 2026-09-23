@@ -18,9 +18,6 @@ provider:
       Ref: TransactionCategorizeQueue
     COGNITO_USER_POOL_ID: ${env:COGNITO_USER_POOL_ID, ''}
     COGNITO_CLIENT_ID: ${env:COGNITO_CLIENT_ID, ''}
-    MPESA_API_KEY: ${env:MPESA_API_KEY, ''}
-    MPESA_CONSUMER_KEY: ${env:MPESA_CONSUMER_KEY, ''}
-    MPESA_CONSUMER_SECRET: ${env:MPESA_CONSUMER_SECRET, ''}
     OPENAI_API_KEY: ${env:OPENAI_API_KEY, ''}
     OPENAI_MODEL: ${env:OPENAI_MODEL, ''}
     # NEVER set this to 'true' in a deployed stage - see middleware/auth.js
@@ -241,16 +238,6 @@ functions:
     timeout: 30
     memorySize: 256
 
-  parseSms:
-    handler: functions/http/transactions/index.parseSms
-    events:
-      - http:
-          path: transactions/parse-sms
-          method: post
-          cors: true
-    timeout: 30
-    memorySize: 256
-
   # Categories
   createCategory:
     handler: functions/http/categories/index.createCategory
@@ -365,17 +352,6 @@ functions:
     memorySize: 256
 
   # ===================== ASYNC/BACKGROUND TASKS =====================
-
-  # M-PESA Webhook - receives transactions from SafariCom
-  mpesaWebhook:
-    handler: functions/async/mpesaWebhookHandler.handler
-    events:
-      - http:
-          path: webhooks/mpesa
-          method: post
-          cors: true
-    timeout: 60
-    memorySize: 512
 
   # Categorize transactions - triggered by SQS when transaction created
   categorizeTransaction:

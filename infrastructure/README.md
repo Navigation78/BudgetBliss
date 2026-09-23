@@ -24,8 +24,8 @@ Requires the AWS CLI configured with credentials that can create Cognito and IAM
    COGNITO_USER_POOL_ID=<UserPoolId output>
    COGNITO_CLIENT_ID=<UserPoolClientId output>
    ```
-2. `frontend/src/aws-exports.js`: update `aws_user_pools_id` and `aws_user_pools_web_client_id` with the same values, and `aws_cloud_logic_custom[0].endpoint` with the API Gateway URL from `serverless deploy` in `backend/`.
+2. `mobile/.env`: update the app's Cognito settings once the bare Android auth layer is wired, and point the API URL at the deployed API Gateway endpoint from `serverless deploy` in `backend/`.
 
 ## Note on current auth status
 
-The backend doesn't verify Cognito token signatures yet (see `backend/middleware/auth.js`), so deploying this stack doesn't make login "real" by itself - the frontend still uses a `DEV_AUTH_BYPASS`-based dev auth bridge (see `backend/.env.example`). Deploying Cognito now is still worthwhile groundwork: real signature verification, when it's built, will read from the pool this stack creates.
+The backend doesn't verify Cognito token signatures yet (see `backend/middleware/auth.js`), so deploying this stack doesn't make login "real" by itself. The Android app and backend still need the real Cognito auth pass that replaces the local `DEV_AUTH_BYPASS` bridge.
