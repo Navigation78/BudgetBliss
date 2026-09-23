@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: BudgetBliss API
   version: 1.0.0
-  description: Serverless API for BudgetBliss (Users, Transactions, Categories, Budgets, Analytics, Webhooks)
+  description: Serverless API for BudgetBliss (Users, Transactions, Categories, Budgets, Analytics)
 servers:
   - url: https://api.example.com/{stage}
     variables:
@@ -216,30 +216,6 @@ paths:
       responses:
         '200':
           description: Deleted
-  /transactions/parse-sms:
-    post:
-      security:
-        - CognitoAuthorizer: []
-      summary: Parse SMS payloads to create transactions (admin/internal)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                messages:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      raw:
-                        type: string
-                      userId:
-                        type: string
-      responses:
-        '200':
-          description: Parsed
   /categories:
     get:
       security:
@@ -342,17 +318,5 @@ paths:
       responses:
         '200':
           description: Daily tip
-  /webhooks/mpesa:
-    post:
-      summary: M-PESA webhook endpoint
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200':
-          description: Webhook received
 security:
   - CognitoAuthorizer: []

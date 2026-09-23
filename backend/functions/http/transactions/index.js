@@ -120,43 +120,10 @@ const deleteTransaction = withAuthAndErrorHandling(async (event) => {
   });
 });
 
-/**
- * POST /transactions/parse-sms
- * Admin only
- */
-const parseSms = withAuthAndErrorHandling(async (event) => {
-  const isAdmin = event.user?.claims?.['cognito:groups']?.includes('admin');
-
-  if (!isAdmin) {
-    return response(403, { error: 'Forbidden - Admin access required' });
-  }
-
-  const body = parseJSON(event.body);
-  const messages = body.messages;
-
-  if (!Array.isArray(messages)) {
-    return response(400, { error: 'messages must be an array' });
-  }
-
-  const results = await Promise.all(
-    messages.map(async (msg) => {
-      try {
-        const transaction = await transactionService.parseAndCreateFromSms(msg);
-        return { success: true, transaction };
-      } catch (err) {
-        return { success: false, error: err.message };
-      }
-    })
-  );
-
-  return response(200, { results });
-});
-
 module.exports = {
   createTransaction,
   getTransactions,
   getTransactionById,
   updateTransaction,
   deleteTransaction,
-  parseSms,
 };

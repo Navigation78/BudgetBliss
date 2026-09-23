@@ -53,8 +53,8 @@ Resources:
         - ALLOW_REFRESH_TOKEN_AUTH
 
   # Grants temporary AWS credentials to signed-in users for direct AWS SDK calls
-  # (e.g. S3 uploads). The frontend currently only calls BudgetBliss's own REST
-  # API (see frontend/src/utils/apiClient.js), not AWS services directly, so this
+  # if a future mobile feature needs them. The Android app should normally call
+  # BudgetBliss's own REST API, not AWS services directly, so this
   # isn't used yet and has no IAM roles attached - add an
   # AWS::Cognito::IdentityPoolRoleAttachment if that changes. Safe to remove if
   # you don't anticipate needing it.
