@@ -1,6 +1,9 @@
-import { registerRootComponent } from 'expo';
+/**
+ * @format
+ */
 
+import { AppRegistry } from 'react-native';
 import App from './App';
+import { name as appName } from './app.json';
 
-// This entry point will be replaced by AppRegistry during the bare Android migration.
-registerRootComponent(App);
+AppRegistry.registerComponent(appName, () => App);
