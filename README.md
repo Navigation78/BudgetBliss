@@ -1,148 +1,97 @@
-# BudgetBliss - Android Native Personal Finance Tracker
+This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-BudgetBliss is an Android-first personal finance app for tracking M-Pesa activity, budgets, and spending insights. The app is moving to a bare React Native Android build so it can use Android-native SMS permissions and listen for M-Pesa messages on the device.
+# Getting Started
 
-The backend stays serverless on AWS. The phone is responsible for reading and parsing M-Pesa SMS messages, storing them locally first, and syncing clean transaction JSON to the API when network access is available.
+> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
-## Architecture
+## Step 1: Start Metro
 
-- Android app: React Native, Android only for now
-- Native SMS listener: receives M-Pesa SMS events on device
-- Local storage: planned offline queue for parsed transactions
-- API Gateway and Lambda: authenticated REST API
-- DynamoDB: users, transactions, categories, budgets
-- SQS: async transaction categorization
-- EventBridge: scheduled dashboard and tip jobs
-- Cognito: authentication
-- OpenAI: transaction categorization fallback and financial tips
+First, you will need to run **Metro**, the JavaScript build tool for React Native.
 
-## Project Structure
+To start the Metro dev server, run the following command from the root of your React Native project:
 
-```text
-BudgetBliss/
-|-- mobile/            # Android React Native app
-|-- backend/           # Serverless Framework API
-|-- infrastructure/    # Cognito CloudFormation stack
-`-- config/            # Shared environment config
+```sh
+# Using npm
+npm start
+
+# OR using Yarn
+yarn start
 ```
 
-There is no browser client in this repo.
+## Step 2: Build and run your app
 
-## Target Transaction Flow
+With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
 
-```text
-M-Pesa SMS arrives on Android
-  -> native SMS listener receives the message
-  -> app filters for M-Pesa sender
-  -> app parses the SMS into normalized transaction JSON
-  -> app writes the transaction to a local offline queue
-  -> app syncs pending transactions to Lambda
-  -> Lambda writes to DynamoDB
-  -> SQS triggers async categorization
-  -> dashboard and tips use stored transaction data
+### Android
+
+```sh
+# Using npm
+npm run android
+
+# OR using Yarn
+yarn android
 ```
 
-The backend does not receive provider callbacks and does not parse raw M-Pesa messages. Personal M-Pesa account tracking happens on the phone.
+### iOS
 
-## Current Status
+For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
 
-- Browser client removed.
-- Serverless backend retained.
-- Backend M-Pesa callback route removed.
-- Backend raw SMS parser removed.
-- Mobile app still needs the next migration step from Expo to bare React Native Android.
-- Auth is still a development stub and must be replaced with real Cognito token handling before production use.
+The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
 
-## Mobile Setup
-
-The current mobile folder is the transition point toward bare React Native Android. The next milestone is to replace Expo runtime pieces with a React Native CLI Android project.
-
-Planned Android package ID:
-
-```text
-com.budgetbliss.app
+```sh
+bundle install
 ```
 
-The mobile app needs:
+Then, and every time you update your native dependencies, run:
 
-- Android Studio and Android SDK
-- Node.js LTS
-- React Native CLI workflow
-- Android SMS permissions for local development builds
-
-Google Play distribution is intentionally deferred because Play policy heavily restricts SMS permissions.
-
-## Backend Setup
-
-Run from `backend/`:
-
-```bash
-npm install
-cp .env.example .env
-npm run validate:env
-npm run dev
+```sh
+bundle exec pod install
 ```
 
-The local API defaults to:
+For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
 
-```text
-http://localhost:3000/dev
+```sh
+# Using npm
+npm run ios
+
+# OR using Yarn
+yarn ios
 ```
 
-When testing from an Android device or emulator, point the app at your machine LAN IP rather than `localhost`.
+If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
-## Backend Environment
+This is one way to run your app — you can also build it directly from Android Studio or Xcode.
 
-Required or planned variables:
+## Step 3: Modify your app
 
-```text
-AWS_REGION=us-east-1
-STAGE=dev
-COGNITO_USER_POOL_ID=your-cognito-user-pool-id
-COGNITO_CLIENT_ID=your-cognito-app-client-id
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_MODEL=gpt-4o-mini
-```
+Now that you have successfully run the app, let's make changes!
 
-`DEV_AUTH_BYPASS=true` is available only for local development. Do not enable it in deployed stages.
+Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
 
-## API Summary
+When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
 
-- `POST /users`
-- `POST /users/login`
-- `GET /users/{id}`
-- `PUT /users/{id}`
-- `DELETE /users/{id}`
-- `POST /transactions`
-- `GET /transactions`
-- `GET /transactions/{id}`
-- `PUT /transactions/{id}`
-- `DELETE /transactions/{id}`
-- `POST /categories`
-- `GET /categories`
-- `PUT /categories/{id}`
-- `DELETE /categories/{id}`
-- `POST /budgets`
-- `GET /budgets`
-- `PUT /budgets/{id}`
-- `DELETE /budgets/{id}`
-- `GET /analytics/dashboard`
-- `GET /analytics/tips/daily`
+- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
+- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
 
-## Known Constraints
+## Congratulations! :tada:
 
-- SMS reading is Android-only.
-- iOS is out of scope for now.
-- Messages received while the app is fully closed may need inbox recovery rather than live delivery.
-- Android battery settings may affect background delivery.
-- Google Play SMS policy will need a separate distribution plan later.
+You've successfully run and modified your React Native App. :partying_face:
 
-## Next Milestones
+### Now what?
 
-1. Replace Expo with bare React Native Android.
-2. Add a native Android SMS listener.
-3. Build the on-device M-Pesa parser using real redacted message samples.
-4. Add local offline transaction queue and sync.
-5. Update `/transactions` to support idempotent M-Pesa sync payloads.
-6. Wire Cognito auth end to end.
-7. Connect screens to local and backend data.
+- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
+- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+
+# Troubleshooting
+
+If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+
+# Learn More
+
+To learn more about React Native, take a look at the following resources:
+
+- [React Native Website](https://reactnative.dev) - learn more about React Native.
+- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
+- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
+- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
+- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
