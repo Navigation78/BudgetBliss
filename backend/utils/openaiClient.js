@@ -3,7 +3,7 @@
  * extra npm dependency). Both callers (services/tipService.js,
  * functions/async/categorizeTransaction.js) already guard on
  * `process.env.OPENAI_API_KEY` being set before calling these, so this module
- * throwing when the key is missing is fine - it should never be reached without one.
+ * throwing when the key is missing is fine - it should never be reached without one
  */
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
